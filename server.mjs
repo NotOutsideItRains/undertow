@@ -422,7 +422,7 @@ function ensureAudio(link, id, tier, atmos) {
   return audioBuilds.get(key);
 }
 // A song in another format, made on the fly for a device that can't play the original: ALAC (lossless, Apple devices) or MP3 (V0, plays anywhere). Made once, then cached beside the original.
-const RECODE = { alac: { ext: "m4a", mime: "audio/mp4", args: ["-c:a", "alac"] }, mp3: { ext: "mp3", mime: "audio/mpeg", args: ["-c:a", "libmp3lame", "-q:a", "0"] } };
+const RECODE = { alac: { ext: "m4a", mime: "audio/mp4", args: ["-c:a", "alac", "-movflags", "+faststart"] }, mp3: { ext: "mp3", mime: "audio/mpeg", args: ["-c:a", "libmp3lame", "-q:a", "0"] } };
 const recodes = new Map();
 function recode(file, fmt) {
   const f = RECODE[fmt], out = `${file.replace(/\.[a-z0-9]+$/, "")}~${fmt}.${f.ext}`;
