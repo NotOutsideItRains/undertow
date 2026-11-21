@@ -147,8 +147,8 @@ async function search(q, link) {
 
 async function stream(a, id, tier, wantAtmos, allowAtmos) {
   if (!/^\d+$/.test(id)) throw httpError(404, "bad id");
-  const manifest = (formats) =>
-    accounts.call(a, "/trackManifests/", { id, formats, manifestType: "MPEG_DASH", uriScheme: "HTTPS" }, { poll: true })
+  const manifest = (formats, soft = false) => // soft: a 403 here means "this track has no such format", not "this login is dead"; the strict calls below still catch a dead login
+    accounts.call(a, "/trackManifests/", { id, formats, manifestType: "MPEG_DASH", uriScheme: "HTTPS" }, { poll: true, soft403: soft })
       .then((r) => r.data?.data?.attributes)
       .catch((e) => (e.status === 429 || e.loginFailed ? Promise.reject(e) : null));
 
@@ -162,12 +162,12 @@ async function stream(a, id, tier, wantAtmos, allowAtmos) {
   }
   if (atmos) { // Dolby Atmos: EAC3_JOC only; fall back to stereo when absent
     try {
-      const at = await manifest(["EAC3_JOC"]);
+      const at = await manifest(["EAC3_JOC"], true);
       if (at?.uri && (at.formats || []).includes("EAC3_JOC")) return { url: at.uri, codec: "eac3-joc", container: "mp4", manifest: "dash", encrypted: false };
     } catch (e) { if (e.status === 429 || e.loginFailed) throw e; }
   }
   const wanted = { HI_RES: ["FLAC_HIRES", "FLAC"], CD: ["FLAC"], HIGH: ["AACLC"], LOW: ["HEAACV1"] }[tier]; // FLAC only, so a player can't pick the lossy rendition
-  let at = await manifest(wanted);
+  let at = await manifest(wanted, wanted.includes("FLAC_HIRES")); // the Hi-Res ask is the one a track may not have
   if (!at?.uri && wanted.includes("FLAC")) at = await manifest([...wanted, "AACLC"]); // no FLAC for this track
   if (!at?.uri) throw httpError(404, "no manifest");
   const codec = (at.formats || []).some((x) => x.startsWith("FLAC")) ? "flac" : "aac";
