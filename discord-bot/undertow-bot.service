@@ -1,0 +1,20 @@
+[Unit]
+Description=Undertow Discord bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=undertowbot
+WorkingDirectory=/opt/undertow-bot
+ExecStart=/opt/undertow-bot/.venv/bin/python bot.py
+Restart=on-failure
+RestartSec=10
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+StateDirectory=undertow-bot
+Environment=PREFS_FILE=/var/lib/undertow-bot/prefs.json
+
+[Install]
+WantedBy=multi-user.target

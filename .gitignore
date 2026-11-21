@@ -1,0 +1,37 @@
+# secrets and runtime state: never committed
+.secret
+.webhook
+.login-ping-user
+data.json
+stats.json
+activity.json
+video-sync.json
+accounts/
+avatars/
+**/.env
+**/token.json
+**/*.pem
+**/*.key
+
+# caches and temp files
+audio-cache/
+audio-tmp/
+video-cache/
+motion-cache/
+pfp-cache/
+node_modules/
+__pycache__/
+*.pyc
+.venv*/
+
+# third-party: has its own repository / is a binary
+hifi-api/
+tools/cloudflared
+am-test/
+
+# build output you can regenerate
+rpc-app/dist/
+
+# rebuilt by rpc-app/build.sh
+downloads/UndertowRPC-*
+downloads/undertow-rpc-*

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Undertow Presence
+Comment=Shows what you're listening to in Undertow as your Discord status
+Exec=undertow-rpc
+Icon=undertow-rpc
+Categories=AudioVideo;Audio;
+Terminal=true
