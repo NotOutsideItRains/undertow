@@ -8,7 +8,8 @@ const V = { off: 0, end: 0, skips: [], loaded: false, synced: false, id: 0, bust
 const $ = (s, r = root) => r.querySelector(s);
 const mmss = (s) => (Number.isFinite(s) ? `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}` : "0:00");
 const SYNC_LABEL = { word: "Karaoke", line: "Line synced", plain: "Plain" };
-const QUALITY = [["HI_RES", "Lossless"], ["HIGH", "High (AAC 320)"], ["LOW", "Low (AAC 96)"], ["ALAC", "Lossless as ALAC (converted)"], ["MP3", "MP3 V0 (converted, plays anywhere)"]];
+const CAN_ALAC = (() => { try { return !!document.createElement("audio").canPlayType('audio/mp4; codecs="alac"'); } catch { return true; } })(); // only Safari and Apple devices play ALAC
+const QUALITY = [["HI_RES", "Lossless"], ["HIGH", "High (AAC 320)"], ["LOW", "Low (AAC 96)"], ["ALAC", `Lossless as ALAC (converted)${CAN_ALAC ? "" : " (this browser says it can't play it)"}`], ["MP3", "MP3 V0 (converted, plays anywhere)"]];
 
 export function openPlayer(c) {
   ctx = c;
@@ -142,6 +143,7 @@ function build() {
   $(".p-search").addEventListener("keydown", (e) => { if (e.key === "Enter") { clearTimeout(searchTimer); search(e.target.value); e.target.blur(); } });
   $(".p-q").addEventListener("change", (e) => {
     P.tier = e.target.value; ctx.store.set("p.tier", P.tier); P.spk.sync = Date.now() + 2500;
+    if (P.tier === "ALAC" && !CAN_ALAC) ctx.toast("This browser says it can't play ALAC, so songs may stay silent. ALAC works in Safari and on Apple devices. Pick MP3 or Lossless instead.", true);
     if (P.i >= 0 && audio.src) { const t = audio.currentTime, was = !audio.paused; audio.src = srcOf(P.tracks[P.i]); audio.addEventListener("loadedmetadata", () => { audio.currentTime = t; if (was) audio.play().catch(() => {}); }, { once: true }); }
   });
   const seek = $(".p-seek");

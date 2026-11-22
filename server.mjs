@@ -147,14 +147,14 @@ async function search(q, link) {
 
 async function stream(a, id, tier, wantAtmos, allowAtmos) {
   if (!/^\d+$/.test(id)) throw httpError(404, "bad id");
-  const manifest = (formats, soft = false) => // soft: a 403 here means "this track has no such format", not "this login is dead"; the strict calls below still catch a dead login
-    accounts.call(a, "/trackManifests/", { id, formats, manifestType: "MPEG_DASH", uriScheme: "HTTPS" }, { poll: true, soft403: soft })
+  const manifest = (formats) => // soft403: a 403 about one song (no such format, a ghost row, a region block) is not a verdict on the login. 401s and searches still catch a dead one.
+    accounts.call(a, "/trackManifests/", { id, formats, manifestType: "MPEG_DASH", uriScheme: "HTTPS" }, { poll: true, soft403: true })
       .then((r) => r.data?.data?.attributes)
       .catch((e) => (e.status === 429 || e.loginFailed ? Promise.reject(e) : null));
 
   let atmos = wantAtmos && allowAtmos;
   if (!atmos) {
-    const info = await accounts.call(a, "/info/", { id }).catch(() => null);
+    const info = await accounts.call(a, "/info/", { id }, { soft403: true }).catch(() => null);
     if (isAtmosOnly(info?.data?.audioModes)) {
       if (!allowAtmos) throw httpError(404, "atmos disabled for this link");
       atmos = true;
@@ -162,12 +162,12 @@ async function stream(a, id, tier, wantAtmos, allowAtmos) {
   }
   if (atmos) { // Dolby Atmos: EAC3_JOC only; fall back to stereo when absent
     try {
-      const at = await manifest(["EAC3_JOC"], true);
+      const at = await manifest(["EAC3_JOC"]);
       if (at?.uri && (at.formats || []).includes("EAC3_JOC")) return { url: at.uri, codec: "eac3-joc", container: "mp4", manifest: "dash", encrypted: false };
     } catch (e) { if (e.status === 429 || e.loginFailed) throw e; }
   }
   const wanted = { HI_RES: ["FLAC_HIRES", "FLAC"], CD: ["FLAC"], HIGH: ["AACLC"], LOW: ["HEAACV1"] }[tier]; // FLAC only, so a player can't pick the lossy rendition
-  let at = await manifest(wanted, wanted.includes("FLAC_HIRES")); // the Hi-Res ask is the one a track may not have
+  let at = await manifest(wanted);
   if (!at?.uri && wanted.includes("FLAC")) at = await manifest([...wanted, "AACLC"]); // no FLAC for this track
   if (!at?.uri) throw httpError(404, "no manifest");
   const codec = (at.formats || []).some((x) => x.startsWith("FLAC")) ? "flac" : "aac";
@@ -218,7 +218,10 @@ function cachedStream(link, id, tier, wantAtmos, label) {
     slowdownAlert(pending, top.sort((x, y) => y[1] - x[1]));
   }
   promise.finally(() => pending.splice(pending.indexOf(label), 1)).catch(() => {});
-  promise.then((out) => logRenditions(id, tier, out.body), () => cache.delete(key)); // never cache failures
+  promise.then((out) => logRenditions(id, tier, out.body), (e) => { // a failed lookup is remembered for 2 minutes so a player retrying a broken song can't hammer the accounts; then it is tried again
+    console.log(`  -> id=${id} tier=${tier} FAILED ${e.status || ""} ${e.message}`);
+    if (e.status === 429 || e.loginFailed) cache.delete(key); else setTimeout(() => { if (cache.get(key)?.promise === promise) cache.delete(key); }, 2 * 60 * 1000).unref();
+  });
   if (cache.size > 3000) cache.delete(cache.keys().next().value);
   return { promise, cached: false };
 }
@@ -419,15 +422,17 @@ function ensureAudio(link, id, tier, atmos) {
   return audioBuilds.get(key);
 }
 // A song in another format, made on the fly for a device that can't play the original: ALAC (lossless, Apple devices) or MP3 (V0, plays anywhere). Made once, then cached beside the original.
-const RECODE = { alac: { ext: "m4a", mime: "audio/mp4", args: ["-c:a", "alac"] }, mp3: { ext: "mp3", mime: "audio/mpeg", args: ["-c:a", "libmp3lame", "-q:a", "0"] } };
+const RECODE = { alac: { ext: "m4a", mime: "audio/mp4", args: ["-c:a", "alac", "-movflags", "+faststart"] }, mp3: { ext: "mp3", mime: "audio/mpeg", args: ["-c:a", "libmp3lame", "-q:a", "0"] } };
 const recodes = new Map();
+const RECODE_MAX = Math.max(1, Number(process.env.RECODE_MAX) || 2); // conversions at once; the rest get "busy, try again". Set RECODE_MAX=1 on a small host.
 function recode(file, fmt) {
   const f = RECODE[fmt], out = `${file.replace(/\.[a-z0-9]+$/, "")}~${fmt}.${f.ext}`;
   if (fs.existsSync(out)) { fs.utimesSync(out, new Date(), new Date()); return Promise.resolve(out); }
-  if (recodes.size >= 2 && !recodes.has(out)) return Promise.reject(Object.assign(httpError(429, "Busy converting. Try again in a moment."), { retryAfter: "3" }));
+  if (recodes.size >= RECODE_MAX && !recodes.has(out)) return Promise.reject(Object.assign(httpError(429, "Busy converting. Try again in a moment."), { retryAfter: "3" }));
   if (!recodes.has(out)) {
     const job = new Promise((ok, bad) => {
-      const tmp = `${out}.part`, c = spawn("ffmpeg", ["-v", "error", "-nostdin", "-y", "-i", file, "-vn", "-map_metadata", "-1", "-ac", "2", ...f.args, "-f", fmt === "alac" ? "ipod" : "mp3", tmp], { stdio: ["ignore", "ignore", "pipe"] });
+      const tmp = `${out}.part`, c = spawn("ffmpeg", ["-v", "error", "-nostdin", "-y", "-i", file, "-threads", "1", "-vn", "-map_metadata", "-1", "-ac", "2", ...f.args, "-f", fmt === "alac" ? "ipod" : "mp3", tmp], { stdio: ["ignore", "ignore", "pipe"] });
+      try { os.setPriority(c.pid, 19); } catch { /* lowest priority, so playback for everyone else is not starved; not fatal */ }
       let err = ""; c.stderr.on("data", (d) => { err = (err + d).slice(-400); });
       const t = setTimeout(() => c.kill("SIGKILL"), 240000);
       c.on("error", (e) => { clearTimeout(t); bad(e); });
