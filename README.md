@@ -1,6 +1,6 @@
 # Undertow
 
-A self-hosted music server and player built around TIDAL. **Open source**: read it, run it, change it, share it, even sell it (see [LICENSE](LICENSE)). The bundled Monochrome code keeps its own license (`web-mono/LICENSE-monochrome.txt`).
+A self-hosted music server and player built around [binimum's hifi-api](https://github.com/binimum/hifi-api). You need your own TIDAL account for it to play anything. **Open source**: read it, run it, change it, share it, even sell it (see [LICENSE](LICENSE)). The bundled Monochrome code keeps its own license (`web-mono/LICENSE-monochrome.txt`).
 
 The whole app is vibe-coded: it was written with AI (Claude Code) from plain-language requests, not by hand.
 
