@@ -12,6 +12,8 @@
 // Try one on any day: add ?seasonal=snow, newyear, flag, hearts or halloween to the address. To try a date and time (they keep running from there):
 // ?seasonal_date=2026-12-31T23:59:45
 // Off switch: the small ✦ tab on the right edge (remembered per browser), the device's "reduce motion" setting, or Undertow's reduced-effects setting.
+// The animations also stay off when the browser draws without graphics acceleration (slow): Undertow's page handles that itself, Monochrome is checked here.
+// Clicking the ✦ tab on overrides that. The flag logo is not an animation and is unaffected.
 (() => {
   "use strict";
   if (window.__ulSeasonal) return;
@@ -28,6 +30,20 @@
   let on = true;
   try { on = localStorage.getItem(KEY) !== "off"; } catch { /* no storage: effects stay on */ }
   const reduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches || document.documentElement.classList.contains("fx-low");
+  // Undertow's own page switches its reduced-effects mode on (fx-low) when the browser draws on the CPU, because it is slow, and the line above follows it.
+  // Monochrome has no such mode, so the same check is made here for it. Clicking the ✦ tab on (remembered as "on") overrides it, like Undertow's own setting.
+  let forced = false;
+  try { forced = localStorage.getItem(KEY) === "on"; } catch { /* no storage */ }
+  let swGl;
+  const softwareGl = () => (swGl ??= (() => {
+    try {
+      const gl = document.createElement("canvas").getContext("webgl");
+      if (!gl) return true;
+      const x = gl.getExtension("WEBGL_debug_renderer_info");
+      return /swiftshader|llvmpipe|softpipe|software|basic render/i.test(x ? String(gl.getParameter(x.UNMASKED_RENDERER_WEBGL)) : "");
+    } catch { return true; }
+  })());
+  const slow = () => !forced && !!document.querySelector("svg.app-logo") && softwareGl(); // only the animations are held back; the flag logo is not an animation
 
   const isRomanian = () => {
     try {
@@ -168,7 +184,7 @@
 
   // ---- one loop for both; it stops by itself when nothing is left to draw ----
   let raf = 0, last = 0;
-  const ambOn = () => on && amb.kind && !reduced();
+  const ambOn = () => on && amb.kind && !reduced() && !slow();
   const frame = (t) => {
     raf = 0;
     const dt = Math.min(0.05, (t - (last || t)) / 1000); last = t;
@@ -196,7 +212,7 @@
   const celebrate = (year, ms) => {
     if (!on) return;
     banner(isRomanian() ? `La mulți ani ${year}!` : `Happy New Year ${year}!`, 8000);
-    if (!reduced()) startFireworks(ms);
+    if (!reduced() && !slow()) startFireworks(ms);
   };
   const midnight = (year) => new Date(year, 0, 1).getTime();
 
@@ -261,7 +277,7 @@
   const start = () => {
     if (!on) return;
     const kind = today.snow ? "snow" : today.hearts ? "hearts" : today.halloween ? "halloween" : "";
-    if (kind && !reduced()) { measure(); seed(kind); kick(); }
+    if (kind && !reduced() && !slow()) { measure(); seed(kind); kick(); }
     if (today.flag) flagOn();
   };
   const stopAll = () => {
@@ -272,13 +288,19 @@
   const makeSwitch = () => {
     const b = document.createElement("button");
     b.type = "button";
-    const label = () => { b.setAttribute("aria-label", on ? "Turn seasonal effects off" : "Turn seasonal effects on"); b.title = on ? "Seasonal effects: on (click to turn off)" : "Seasonal effects: off (click to turn on)"; b.setAttribute("aria-pressed", String(on)); b.style.opacity = on ? "0.5" : "0.3"; };
+    const label = () => {
+      const held = on && slow(); // on, but the animations are held back because this device draws without graphics acceleration
+      b.setAttribute("aria-label", on && !held ? "Turn seasonal effects off" : "Turn seasonal effects on");
+      b.title = held ? "Seasonal animations are off on this device (no graphics acceleration, so they would be slow). Click to turn them on." : on ? "Seasonal effects: on (click to turn off)" : "Seasonal effects: off (click to turn on)";
+      b.setAttribute("aria-pressed", String(on && !held)); b.style.opacity = on && !held ? "0.5" : "0.3";
+    };
     b.textContent = "✦";
     b.style.cssText = "position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:100001;width:22px;height:44px;padding:0;border:0;border-radius:10px 0 0 10px;background:rgba(0,0,0,.4);color:#fff;font:14px/1 sans-serif;cursor:pointer";
     b.addEventListener("mouseenter", () => (b.style.opacity = "1"));
     b.addEventListener("mouseleave", label);
     b.addEventListener("click", () => {
-      on = !on;
+      if (on && slow()) forced = true; // asked for on a slow device: the animations start
+      else { on = !on; forced = on; }
       try { localStorage.setItem(KEY, on ? "on" : "off"); } catch { /* not remembered */ }
       if (on) start(); else stopAll();
       label();

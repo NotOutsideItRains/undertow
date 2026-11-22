@@ -27,7 +27,7 @@ Not in git (see `.gitignore`): `data.json` and the other runtime state, `.secret
 - December: snow. New Year: a countdown in the last 10 seconds of 31 December and fireworks at midnight; one short show the first time the site is opened on 1 January.
 - 1 December, for Romanian browsers (language `ro`, or the Bucharest/Chisinau time zone): the logo and tab icon become the Romanian flag.
 - 14 February: hearts. 31 October: pumpkins and bats.
-- Off switch: the small ✦ tab on the right edge (remembered per browser). The device's reduce-motion setting and Undertow's reduced-effects setting are respected.
+- Off switch: the small ✦ tab on the right edge (remembered per browser). The device's reduce-motion setting and Undertow's reduced-effects setting are respected. Without graphics acceleration (software rendering) the animations stay off, on Undertow through its own reduced-effects mode and on Monochrome through the same check made by the script; the ✦ tab turns them on anyway. The flag logo is not an animation, so it still shows.
 - To try one on any day: add `?seasonal=snow`, `newyear`, `flag`, `hearts` or `halloween` to the address. To try a date and time: `?seasonal_date=2026-12-31T23:59:45`.
 
 ## Rebuilding the second player
