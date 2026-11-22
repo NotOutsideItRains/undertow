@@ -20,6 +20,15 @@ Plain Node.js (ESM) with no npm dependencies. One process serves everything on `
 
 Not in git (see `.gitignore`): `data.json` and the other runtime state, `.secret`, `.webhook`, accounts and avatars, caches, and `hifi-api/` (a separate clone).
 
+## Speed
+
+`lib/compress.mjs` makes both sites (Undertow's pages and Monochrome's) cheaper to load:
+
+- **Compression:** text (pages, scripts, styles, JSON, SVG) is sent brotli- or gzip-compressed when the browser accepts it. A file on disk is compressed once per version (its size and time) and kept in memory, and `server.mjs` compresses the two sites' files in the background at startup so the first visitor does not wait. Pages and JSON built on the fly are gzip-compressed when they are over 1 KB. Images, fonts, audio and video are never compressed, and range requests and streams are untouched.
+- **ETag:** files are sent with a weak ETag, so a file the browser already has costs a 304 and a few bytes.
+- **Cache lifetime:** `app.js` and `style.css` are named with `?v=<their own time>` by the page, so with a `v` they are kept for a year. Monochrome's hashed files were already kept for a year. Fonts with a plain name are kept for a week and pictures with a plain name for a day. Everything else (the pages, `seasonal.js`, `speaker.js`) is checked with its ETag on each visit.
+- To use it for a new file route: `serveFile(req, res, file, stat, { type, cache, headers })` for a file on disk, `sendBody(res, status, body, headers)` for an answer built on the fly (it needs `res.req`, which Node sets).
+
 ## Server speakers in Monochrome
 
 For the people an admin allowed (the same rule as the first player: an admin, or a member with the speaker permission), Monochrome has a speaker button in the player bar. With it on, the song plays out of the server's sound card (ffmpeg into ALSA, `lib/speaker.mjs`) and the page is the remote: play, pause, seek and the next song work as usual, and a small panel above the player bar has the device name, a volume slider and Stop. People without access see nothing (the server answers 403 and the button is never added).
