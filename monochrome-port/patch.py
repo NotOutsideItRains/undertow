@@ -915,6 +915,20 @@ def search_placeholder_html(s):
 edit("index.html", search_placeholder_html)
 
 
+# ---- seasonal touches (snow in December, New Year fireworks, the Romanian flag on 1 December ...): web/seasonal.js is shared with the Undertow site ----
+shutil.copyfile(PORT.parent / "web" / "seasonal.js", root / "public" / "seasonal.js")
+
+
+def seasonal_html(s):
+    if "/seasonal.js" in s:
+        return s
+    assert "    </body>" in s, "index.html: no </body>"
+    return s.replace("    </body>", '    <script src="/seasonal.js" defer></script>\n    </body>', 1)
+
+
+edit("index.html", seasonal_html)
+
+
 def recode_api(s):
     if "undertow-recode" in s:
         return s

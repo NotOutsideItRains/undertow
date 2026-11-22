@@ -20,6 +20,16 @@ Plain Node.js (ESM) with no npm dependencies. One process serves everything on `
 
 Not in git (see `.gitignore`): `data.json` and the other runtime state, `.secret`, `.webhook`, accounts and avatars, caches, and `hifi-api/` (a separate clone).
 
+## Seasonal touches
+
+`web/seasonal.js` adds small special-day effects to the Undertow site and to Monochrome (one file, loaded by both; `patch.py` copies it into the Monochrome build, and `web-mono/seasonal.js` is that copy, so edit `web/seasonal.js` and copy it over). It uses the visitor's own clock and time zone, not the server's, and does nothing on an ordinary day.
+
+- December: snow. New Year: a countdown in the last 10 seconds of 31 December and fireworks at midnight; one short show the first time the site is opened on 1 January.
+- 1 December, for Romanian browsers (language `ro`, or the Bucharest/Chisinau time zone): the logo and tab icon become the Romanian flag.
+- 14 February: hearts. 31 October: pumpkins and bats.
+- Off switch: the small ✦ tab on the right edge (remembered per browser). The device's reduce-motion setting and Undertow's reduced-effects setting are respected.
+- To try one on any day: add `?seasonal=snow`, `newyear`, `flag`, `hearts` or `halloween` to the address. To try a date and time: `?seasonal_date=2026-12-31T23:59:45`.
+
 ## Rebuilding the second player
 
 ```bash

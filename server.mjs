@@ -1073,6 +1073,7 @@ const STATIC = {
   "/app.webmanifest": ["app.webmanifest", "application/manifest+json"],
   "/player.js": ["player.js", "text/javascript; charset=utf-8"],
   "/rpc.js": ["rpc.js", "text/javascript; charset=utf-8"],
+  "/seasonal.js": ["seasonal.js", "text/javascript; charset=utf-8"],
   "/party.js": ["party.js", "text/javascript; charset=utf-8"],
   "/interlude.gif": ["interlude.gif", "image/gif"],
   "/vendor/braccato.js": ["vendor/braccato.js", "text/javascript; charset=utf-8"],
