@@ -929,6 +929,20 @@ def seasonal_html(s):
 edit("index.html", seasonal_html)
 
 
+# ---- the server's speakers (for the people an admin allowed): monochrome-port/undertow-speaker.js, loaded as /speaker.js ----
+shutil.copyfile(PORT / "undertow-speaker.js", root / "public" / "speaker.js")
+
+
+def speaker_html(s):
+    if "/speaker.js" in s:
+        return s
+    assert "    </body>" in s, "index.html: no </body>"
+    return s.replace("    </body>", '    <script src="/speaker.js" defer></script>\n    </body>', 1)
+
+
+edit("index.html", speaker_html)
+
+
 def recode_api(s):
     if "undertow-recode" in s:
         return s

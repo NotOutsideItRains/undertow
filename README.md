@@ -20,6 +20,15 @@ Plain Node.js (ESM) with no npm dependencies. One process serves everything on `
 
 Not in git (see `.gitignore`): `data.json` and the other runtime state, `.secret`, `.webhook`, accounts and avatars, caches, and `hifi-api/` (a separate clone).
 
+## Server speakers in Monochrome
+
+For the people an admin allowed (the same rule as the first player: an admin, or a member with the speaker permission), Monochrome has a speaker button in the player bar. With it on, the song plays out of the server's sound card (ffmpeg into ALSA, `lib/speaker.mjs`) and the page is the remote: play, pause, seek and the next song work as usual, and a small panel above the player bar has the device name, a volume slider and Stop. People without access see nothing (the server answers 403 and the button is never added).
+
+- Server: `/__off/speaker` in `lib/playerhost.mjs` (GET for the status, POST for the actions), backed by `speakerAllowed` and `speakerAct` in `server.mjs`, which the first player's `/api/play/speaker` uses too, so the two players share one rule and one speaker.
+- Client: `monochrome-port/undertow-speaker.js`, loaded as `/speaker.js` (`patch.py` copies it into a rebuild and adds the script tag; `web-mono/speaker.js` is the built copy). It reads the song from the audio element's address (`/audio/<id>?quality=...`), so Monochrome's own player code is not patched. The page's own copy of the song keeps playing, muted, so the progress bar and lyrics follow its clock; every second it is pulled back to the server's place. When the server's copy ends, the page's copy ends a moment later and Monochrome goes on to the next song, shuffle or repeat itself.
+- A song that is not one of Undertow's (no `/audio/<id>` address) plays on the device instead. The choice is remembered per browser.
+- The sound card is picked as for the first player (`SPEAKER_DEVICE`, `SPEAKER_NAME` and `SPEAKER_CARD` in the environment override the detection).
+
 ## Seasonal touches
 
 `web/seasonal.js` adds small special-day effects to the Undertow site and to Monochrome (one file, loaded by both; `patch.py` copies it into the Monochrome build, and `web-mono/seasonal.js` is that copy, so edit `web/seasonal.js` and copy it over). It uses the visitor's own clock and time zone, not the server's, and does nothing on an ordinary day.
