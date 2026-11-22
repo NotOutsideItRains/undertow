@@ -1,0 +1,27 @@
+Undertow Community License
+
+Copyright (c) 2026 NotOutsideItRains
+
+Permission is granted to anyone to use, copy, modify, and redistribute this
+software and its source code, in original or modified form, free of charge,
+subject to these conditions:
+
+1. This notice and the copyright line above must be kept in every copy or
+   substantial portion of the software.
+2. The software, and anything derived from it, must stay open source: if you
+   redistribute it, you must provide its complete source code under these same
+   terms.
+3. You may not sell the software, or a modified version of it, and you may not
+   charge for access to it, for a copy of it, or for a service whose value
+   comes mainly from running it. Running it for yourself, your friends, or a
+   community for free is fine.
+4. Third-party code included in this repository (for example the Monochrome
+   build in web-mono/) stays under its own license, which these terms do not
+   change.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

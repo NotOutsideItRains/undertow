@@ -1,6 +1,6 @@
 # Undertow
 
-A self-hosted music server and player built around TIDAL. **Open source**: read it, run it, change it. The bundled Monochrome code keeps its own license (`web-mono/LICENSE-monochrome.txt`).
+A self-hosted music server and player built around TIDAL. **Open source**: read it, run it, change it, share it (but you may not sell it, see [LICENSE](LICENSE)). The bundled Monochrome code keeps its own license (`web-mono/LICENSE-monochrome.txt`).
 
 The whole app is vibe-coded: it was written with AI (Claude Code) from plain-language requests, not by hand.
 
@@ -30,7 +30,7 @@ Then open http://localhost:7000. On the first start there are no users, so the s
 cat .setup-code
 ```
 
-**The TIDAL backend.** Undertow talks to TIDAL through `hifi-api`, a separate project that is not part of this repository. Clone it into `hifi-api/` next to `server.mjs`, make a virtual environment in `hifi-api/.venv` with its requirements, and log in to TIDAL from the admin page. Undertow starts and restarts it for you. To use one that is already running somewhere else, set `HIFI_API_URL` (for example `HIFI_API_URL=http://127.0.0.1:8000 node server.mjs`).
+**The TIDAL backend.** Undertow talks to TIDAL through [binimum/hifi-api](https://github.com/binimum/hifi-api), a separate project that is not part of this repository. Clone it into `hifi-api/` next to `server.mjs`, make a virtual environment in `hifi-api/.venv` with its requirements, and log in to TIDAL from the admin page. Undertow starts and restarts it for you. To use one that is already running somewhere else, set `HIFI_API_URL` (for example `HIFI_API_URL=http://127.0.0.1:8000 node server.mjs`).
 
 **Run it all the time (systemd).** Save this as `/etc/systemd/system/undertow.service` (change the path and user):
 
@@ -58,7 +58,21 @@ sudo systemctl daemon-reload && sudo systemctl enable --now undertow
 journalctl -u undertow -f
 ```
 
-**Public address.** Put it behind a reverse proxy or a Cloudflare tunnel with HTTPS, then set `PUBLIC_URL` (the main site), `PLAYER_HOST` (the hostname that serves the Monochrome player) and `TRUSTED_PROXIES` (the proxy's IP addresses, so real client addresses are believed). The built-in defaults are the original author's own addresses, so set these before you expose it.
+**Your addresses.** Nothing is tied to one domain: you set your own with environment variables. Without them it runs on `http://localhost:7000` and the Monochrome player is off. To put it online, use a reverse proxy or a Cloudflare tunnel with HTTPS and set these (in the systemd unit as `Environment=` lines, or on the command line):
+
+| Variable | Example | Meaning |
+| --- | --- | --- |
+| `PUBLIC_URL` | `https://music.example.com` | The main site's public address. |
+| `PLAYER_HOST` | `player.example.com` | The hostname that serves the Monochrome player. Point it at the same server. Several can be listed, separated by commas. Empty means the player is off. |
+| `TRUSTED_PROXIES` | `127.0.0.1,10.0.0.5` | Your proxy's IP addresses, so the real visitor address is believed. |
+
+```ini
+Environment=PUBLIC_URL=https://music.example.com
+Environment=PLAYER_HOST=player.example.com
+Environment=TRUSTED_PROXIES=127.0.0.1
+```
+
+Trying it on one machine? `PLAYER_HOST=127.0.0.1 node server.mjs` serves the Monochrome player on http://127.0.0.1:7000, while http://localhost:7000 stays the main site.
 
 **Updating.**
 
@@ -95,7 +109,8 @@ Issues and pull requests are welcome. There are no dependencies to install. Chec
 
 ## License
 
-Open source. The bundled Monochrome code keeps its own license (`web-mono/LICENSE-monochrome.txt`). Check the repository for the license that applies to the rest.
+The [Undertow Community License](LICENSE): free to use, modify and redistribute, the source must stay open, and it may not be sold. Strictly speaking that is "source available / non-commercial", since the OSI's open-source definition does not allow a no-selling rule. The bundled Monochrome code keeps its own license (`web-mono/LICENSE-monochrome.txt`).
+
 
 ## What is in here
 
