@@ -16,6 +16,10 @@ updates:
       - dependency-name: "yt-dlp"
       - dependency-name: "yt-dlp-ejs"
       - dependency-name: "deno"
+      # davey 0.2 breaks voice with discord.py 2.7.1: the bot's audio goes out unencrypted and
+      # nobody hears it (see discord-bot/README.md). Remove this when discord.py supports it.
+      - dependency-name: "davey"
+        versions: [">=0.2.0"]
     groups:
       python-minor-and-patch:
         update-types: ["minor", "patch"]
