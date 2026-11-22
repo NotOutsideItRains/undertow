@@ -24,11 +24,27 @@ Not in git (see `.gitignore`): `data.json` and the other runtime state, `.secret
 
 `web/seasonal.js` adds small special-day effects to the Undertow site and to Monochrome (one file, loaded by both; `patch.py` copies it into the Monochrome build, and `web-mono/seasonal.js` is that copy, so edit `web/seasonal.js` and copy it over). It uses the visitor's own clock and time zone, not the server's, and does nothing on an ordinary day.
 
-- December: snow. New Year: a countdown in the last 10 seconds of 31 December and fireworks at midnight; one short show the first time the site is opened on 1 January.
-- 1 December, for Romanian browsers (language `ro`, or the Bucharest/Chisinau time zone): the logo and tab icon become the Romanian flag.
-- 14 February: hearts. 31 October: pumpkins and bats.
-- Off switch: the small ✦ tab on the right edge (remembered per browser). The device's reduce-motion setting and Undertow's reduced-effects setting are respected. Without graphics acceleration (software rendering) the animations stay off, on Undertow through its own reduced-effects mode and on Monochrome through the same check made by the script; the ✦ tab turns them on anyway. The flag logo is not an animation, so it still shows.
-- To try one on any day: add `?seasonal=snow`, `newyear`, `flag`, `hearts` or `halloween` to the address. To try a date and time: `?seasonal_date=2026-12-31T23:59:45`.
+| When | What |
+| --- | --- |
+| December | Snow |
+| 31 December / 1 January | A countdown in the last 10 seconds, fireworks at midnight; one short show the first time the site is opened on 1 January |
+| 24-26 December | A Santa hat on the logo |
+| 14 February | Hearts |
+| 1 March (Romanian) | A red-and-white Martisor logo |
+| 17 March | Shamrocks |
+| 1 April | The logos are upside down |
+| 4 May | "May the Fourth be with you" and a lightsaber sweeping across the screen (once per tab session) |
+| June | A rainbow logo |
+| 21 June (World Music Day) | Music notes |
+| 23 September - 15 November | Autumn leaves |
+| 31 October | Pumpkins and bats (instead of leaves) |
+| 1 December, 24 January, 9 May (Romanian) | The logo and tab icon become the Romanian flag |
+
+"Romanian" means the browser's language is Romanian, or its time zone is Bucharest or Chisinau. The logo changes cover Undertow's icon, Monochrome's sidebar icon and its empty player cover, and the browser-tab icon.
+
+- Off switch: the small ✦ tab on the right edge (remembered per browser). The device's reduce-motion setting and Undertow's reduced-effects setting are respected. Without graphics acceleration (software rendering) the animations stay off, on Undertow through its own reduced-effects mode and on Monochrome through the same check made by the script; the ✦ tab turns them on anyway. The logo changes are not animations, so they still show.
+- To try one on any day: add `?seasonal=snow`, `hearts`, `shamrocks`, `music`, `leaves`, `halloween`, `hat`, `rainbow`, `flag`, `martisor`, `april`, `newyear` or `may4` to the address. To try a date and time: `?seasonal_date=2026-12-31T23:59:45`.
+- To add a day: add it to the `today` table in `web/seasonal.js`, and a new falling thing to `KINDS` or a new logo to `SKINS` if it needs one.
 
 ## Rebuilding the second player
 
