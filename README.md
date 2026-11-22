@@ -20,6 +20,41 @@ Plain Node.js (ESM) with no npm dependencies. One process serves everything on `
 
 Not in git (see `.gitignore`): `data.json` and the other runtime state, `.secret`, `.webhook`, accounts and avatars, caches, and `hifi-api/` (a separate clone).
 
+## Server speakers in Monochrome
+
+For the people an admin allowed (the same rule as the first player: an admin, or a member with the speaker permission), Monochrome has a speaker button in the player bar. With it on, the song plays out of the server's sound card (ffmpeg into ALSA, `lib/speaker.mjs`) and the page is the remote: play, pause, seek and the next song work as usual, and a small panel above the player bar has the device name, a volume slider and Stop. People without access see nothing (the server answers 403 and the button is never added).
+
+- Server: `/__off/speaker` in `lib/playerhost.mjs` (GET for the status, POST for the actions), backed by `speakerAllowed` and `speakerAct` in `server.mjs`, which the first player's `/api/play/speaker` uses too, so the two players share one rule and one speaker.
+- Client: `monochrome-port/undertow-speaker.js`, loaded as `/speaker.js` (`patch.py` copies it into a rebuild and adds the script tag; `web-mono/speaker.js` is the built copy). It reads the song from the audio element's address (`/audio/<id>?quality=...`), so Monochrome's own player code is not patched. The page's own copy of the song keeps playing, muted, so the progress bar and lyrics follow its clock; every second it is pulled back to the server's place. When the server's copy ends, the page's copy ends a moment later and Monochrome goes on to the next song, shuffle or repeat itself.
+- A song that is not one of Undertow's (no `/audio/<id>` address) plays on the device instead. The choice is remembered per browser.
+- The sound card is picked as for the first player (`SPEAKER_DEVICE`, `SPEAKER_NAME` and `SPEAKER_CARD` in the environment override the detection).
+
+## Seasonal touches
+
+`web/seasonal.js` adds small special-day effects to the Undertow site and to Monochrome (one file, loaded by both; `patch.py` copies it into the Monochrome build, and `web-mono/seasonal.js` is that copy, so edit `web/seasonal.js` and copy it over). It uses the visitor's own clock and time zone, not the server's, and does nothing on an ordinary day.
+
+| When | What |
+| --- | --- |
+| December | Snow |
+| 31 December / 1 January | A countdown in the last 10 seconds, fireworks at midnight; one short show the first time the site is opened on 1 January |
+| 24-26 December | A Santa hat on the logo |
+| 14 February | Hearts |
+| 1-8 March (Romanian) | A red-and-white Martisor logo |
+| 17 March | Shamrocks |
+| 1 April | The logos are upside down |
+| 4 May | "May the Fourth be with you" and a lightsaber sweeping across the screen (once per tab session) |
+| June | A rainbow logo |
+| 21 June (World Music Day) | Music notes |
+| 23 September - 15 November | Autumn leaves |
+| 31 October | Pumpkins and bats (instead of leaves) |
+| 1 December, 24 January, 9 May (Romanian) | The logo and tab icon become the Romanian flag |
+
+"Romanian" means the browser's language is Romanian, or its time zone is Bucharest or Chisinau. The logo changes cover Undertow's icon, Monochrome's sidebar icon and its empty player cover, and the browser-tab icon.
+
+- Off switch: the small ✦ tab on the right edge (remembered per browser). The device's reduce-motion setting and Undertow's reduced-effects setting are respected. Without graphics acceleration (software rendering) the animations stay off, on Undertow through its own reduced-effects mode and on Monochrome through the same check made by the script; the ✦ tab turns them on anyway. The logo changes are not animations, so they still show.
+- To try one on any day: add `?seasonal=snow`, `hearts`, `shamrocks`, `music`, `leaves`, `halloween`, `hat`, `rainbow`, `flag`, `martisor`, `april`, `newyear` or `may4` to the address. To try a date and time: `?seasonal_date=2026-12-31T23:59:45`.
+- To add a day: add it to the `today` table in `web/seasonal.js`, and a new falling thing to `KINDS` or a new logo to `SKINS` if it needs one.
+
 ## Rebuilding the second player
 
 ```bash

@@ -637,6 +637,28 @@ async function radio(me, id, exclude) {
   for (const t of out) { known.set(t.id, `${t.artist} - ${t.title}`); knownMeta.set(t.id, { title: t.title, artist: t.artist, duration: t.duration }); }
   return out.map(webRow);
 }
+// The server's speakers, for both players (the first one's /api/play/speaker and Monochrome's /__off/speaker): who may use them, and what a request does.
+const speakerAllowed = (me) => me.role === "admin" || me.speaker === true;
+async function speakerAct(me, b) {
+  const num = (v, max) => (Number.isFinite(Number(v)) ? Math.max(0, Math.min(Number(v), max)) : 0);
+  if (b.action === "play") {
+    const id = String(b.id || ""), tier = tierFor(b.q, "HI_RES"), sub = subsonic.parseId(id);
+    if (!sub && !/^\d+$/.test(id)) throw httpError(400, "bad id");
+    const open = async () => {
+      if (sub) { const up = await subsonic.open(sub.server, sub.song, tier, null); return up.file ? { file: up.file } : { stream: Readable.fromWeb(up.body) }; }
+      return { file: await ensureAudio(playLink, id, tier, false) };
+    };
+    logEvent({ t: Date.now(), kind: "stream", client: "web", linkId: "player", linkName: "Web player", userId: me.id, user: me.displayName, device: "Server speakers", detail: known.get(id) || `track ${id}`, quality: tier, status: 200, ms: 0, cached: false });
+    await speaker.play({ id, title: String(b.title || "").slice(0, 120), dur: num(b.dur, 7200), at: num(b.pos, 7200), open });
+  } else if (b.action === "pause") await speaker.pause();
+  else if (b.action === "resume") await speaker.resume();
+  else if (b.action === "seek") await speaker.seek(num(b.pos, 7200));
+  else if (b.action === "volume") await speaker.volume(num(b.vol, 100));
+  else if (b.action === "stop") await speaker.stop();
+  else throw httpError(400, "Unknown action");
+  return speaker.status();
+}
+
 async function playApi(req, res, u) {
   const me = sessionUser(sidOf(req));
   if (!me || me.disabled) return json(res, { error: "Sign in first" }, 401);
@@ -657,28 +679,12 @@ async function playApi(req, res, u) {
       res.on("close", () => heavy.set(me.id, Math.max(0, (heavy.get(me.id) || 1) - 1)));
     }
     if (route === "speaker") { // the server's own speakers (its AUX out); admins choose who may use them
-      if (me.role !== "admin" && me.speaker !== true) throw httpError(403, "You can't use the server speakers");
+      if (!speakerAllowed(me)) throw httpError(403, "You can't use the server speakers");
       if (req.method === "GET") return json(res, await speaker.status());
       if (req.headers["x-requested-with"] !== "ui") throw httpError(403, "Not allowed");
       rate(me, "speaker", 240, 60000);
       const b = await new Promise((ok, no) => { let s = ""; req.on("data", (c) => { s += c; if (s.length > 4096) req.destroy(); }); req.on("end", () => { try { ok(JSON.parse(s || "{}")); } catch { no(httpError(400, "Bad request")); } }); req.on("error", no); });
-      const num = (v, max) => (Number.isFinite(Number(v)) ? Math.max(0, Math.min(Number(v), max)) : 0);
-      if (b.action === "play") {
-        const id = String(b.id || ""), tier = tierFor(b.q, "HI_RES"), sub = subsonic.parseId(id);
-        if (!sub && !/^\d+$/.test(id)) throw httpError(400, "bad id");
-        const open = async () => {
-          if (sub) { const up = await subsonic.open(sub.server, sub.song, tier, null); return up.file ? { file: up.file } : { stream: Readable.fromWeb(up.body) }; }
-          return { file: await ensureAudio(playLink, id, tier, false) };
-        };
-        logEvent({ t: Date.now(), kind: "stream", client: "web", linkId: "player", linkName: "Web player", userId: me.id, user: me.displayName, device: "Server speakers", detail: known.get(id) || `track ${id}`, quality: tier, status: 200, ms: 0, cached: false });
-        await speaker.play({ id, title: String(b.title || "").slice(0, 120), dur: num(b.dur, 7200), at: num(b.pos, 7200), open });
-      } else if (b.action === "pause") await speaker.pause();
-      else if (b.action === "resume") await speaker.resume();
-      else if (b.action === "seek") await speaker.seek(num(b.pos, 7200));
-      else if (b.action === "volume") await speaker.volume(num(b.vol, 100));
-      else if (b.action === "stop") await speaker.stop();
-      else throw httpError(400, "Unknown action");
-      return json(res, await speaker.status());
+      return json(res, await speakerAct(me, b));
     }
     if (route === "scrobble") { // what the player is playing, to the person's own Last.fm
       if (req.headers["x-requested-with"] !== "ui") throw httpError(403, "Not allowed");
@@ -1073,6 +1079,7 @@ const STATIC = {
   "/app.webmanifest": ["app.webmanifest", "application/manifest+json"],
   "/player.js": ["player.js", "text/javascript; charset=utf-8"],
   "/rpc.js": ["rpc.js", "text/javascript; charset=utf-8"],
+  "/seasonal.js": ["seasonal.js", "text/javascript; charset=utf-8"],
   "/party.js": ["party.js", "text/javascript; charset=utf-8"],
   "/interlude.gif": ["interlude.gif", "image/gif"],
   "/vendor/braccato.js": ["vendor/braccato.js", "text/javascript; charset=utf-8"],
@@ -1094,7 +1101,7 @@ http
       u.pathname = u.pathname.replace(/\/{2,}/g, "/"); // tolerate "//" from base URLs ending in "/"
 
       if (playerHost.isPlayerHost(req)) { // the second player's own address: its app, its gateway and its sign-in, and nothing else of this server
-        return await playerHost.handle(req, res, u, { ip: ipOf(req), appName: APP_NAME, hifi: (path, params, kind) => withAccount({}, (a) => accounts.call(a, path, params, { poll: true, soft403: true }), kind),
+        return await playerHost.handle(req, res, u, { ip: ipOf(req), appName: APP_NAME, speaker: { allowed: speakerAllowed, status: speaker.status, act: speakerAct }, hifi: (path, params, kind) => withAccount({}, (a) => accounts.call(a, path, params, { poll: true, soft403: true }), kind),
           mv: { // music videos in the second player: it says which song, Undertow finds the video, saves it and measures how it lines up
             available: () => video.available(),
             sync: (id, meta) => videoSyncFor(id, meta),
