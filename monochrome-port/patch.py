@@ -840,6 +840,18 @@ ALAC_WARN = r'''    <script>/* undertow-alac-warn: ALAC only plays in Safari and
 '''
 edit("index.html", alac_warn_html)
 
+MOBILE_META_CLAMP = r'''
+/* ul-mobile-meta-clamp: a long title or album name on a phone took three lines and crowded the fullscreen player. Title: 2 lines, album and artist: 1 line each, with an ellipsis. */
+@media (max-width: 768px) {
+  #fullscreen-cover-overlay #fullscreen-track-title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
+  #fullscreen-cover-overlay #fullscreen-track-album, #fullscreen-cover-overlay #fullscreen-track-artist { display: block; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #fullscreen-cover-overlay #fullscreen-track-album { font-size: .84rem; }
+  /* both are grids with auto columns, which grow to fit no-wrap text instead of cutting it */
+  #fullscreen-cover-overlay .fullscreen-track-info, #fullscreen-cover-overlay .fullscreen-track-text { grid-template-columns: minmax(0, 1fr); min-width: 0; }
+}
+'''
+edit("styles.css", lambda s: s if "ul-mobile-meta-clamp" in s else s + MOBILE_META_CLAMP)
+
 
 def recode_api(s):
     if "undertow-recode" in s:
