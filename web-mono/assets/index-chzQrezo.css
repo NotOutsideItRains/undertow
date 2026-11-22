@@ -8,3 +8,13 @@
   /* both are grids with auto columns, which grow to fit no-wrap text instead of cutting it */
   #fullscreen-cover-overlay .fullscreen-track-info, #fullscreen-cover-overlay .fullscreen-track-text { grid-template-columns: minmax(0, 1fr); min-width: 0; }
 }
+
+/* ul-touch-targets: the like heart and the three-dot menu in song rows were about 24px on a phone, too small to press. The hit area is 44px; negative margins keep the row layout as it was. */
+@media (max-width: 768px), (pointer: coarse) {
+  .track-item { min-height: 48px; }
+  .track-item .track-row-like-btn, .track-item .track-menu-btn, .track-item .track-action-btn {
+    box-sizing: border-box; min-width: 44px; min-height: 44px; padding: 0; margin: -6px -6px;
+    display: inline-flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent;
+  }
+  .track-item .track-row-like-btn svg, .track-item .track-menu-btn svg, .track-item .track-action-btn svg { width: 20px; height: 20px; }
+}

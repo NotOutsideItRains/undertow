@@ -852,6 +852,19 @@ MOBILE_META_CLAMP = r'''
 '''
 edit("styles.css", lambda s: s if "ul-mobile-meta-clamp" in s else s + MOBILE_META_CLAMP)
 
+TOUCH_TARGETS = r'''
+/* ul-touch-targets: the like heart and the three-dot menu in song rows were about 24px on a phone, too small to press. The hit area is 44px; negative margins keep the row layout as it was. */
+@media (max-width: 768px), (pointer: coarse) {
+  .track-item { min-height: 48px; }
+  .track-item .track-row-like-btn, .track-item .track-menu-btn, .track-item .track-action-btn {
+    box-sizing: border-box; min-width: 44px; min-height: 44px; padding: 0; margin: -6px -6px;
+    display: inline-flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent;
+  }
+  .track-item .track-row-like-btn svg, .track-item .track-menu-btn svg, .track-item .track-action-btn svg { width: 20px; height: 20px; }
+}
+'''
+edit("styles.css", lambda s: s if "ul-touch-targets" in s else s + TOUCH_TARGETS)
+
 
 def recode_api(s):
     if "undertow-recode" in s:
