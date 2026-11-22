@@ -11,10 +11,8 @@ subject to these conditions:
 2. The software, and anything derived from it, must stay open source: if you
    redistribute it, you must provide its complete source code under these same
    terms.
-3. You may not sell the software, or a modified version of it, and you may not
-   charge for access to it, for a copy of it, or for a service whose value
-   comes mainly from running it. Running it for yourself, your friends, or a
-   community for free is fine.
+3. You may sell the software, or a modified version of it, as long as the
+   source stays open under these terms.
 4. Third-party code included in this repository (for example the Monochrome
    build in web-mono/) stays under its own license, which these terms do not
    change.
