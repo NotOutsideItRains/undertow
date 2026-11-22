@@ -28,3 +28,19 @@
   }
   .track-item .track-row-like-btn svg, .track-item .track-menu-btn svg, .track-item .track-action-btn svg { width: 20px; height: 20px; }
 }
+
+/* ul-ui-fixes-2: three phone fixes.
+   1. The home tabs scroll sideways, but they were allowed to shrink, so the no-wrap labels ran into each other ("Editor's Picks" over "AOTY").
+   2. The search placeholder is cut with an ellipsis instead of a hard clip.
+   3. Queue panel: 44px hit areas for the heart and remove buttons (the grid columns stay 32px), a 44px-tall drag handle, and the heart is not faded on touch screens. */
+@media (max-width: 768px), (pointer: coarse) {
+  .home-header-tabs { scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; padding-right: 1rem; }
+  .home-header-tabs .home-tab { flex: 0 0 auto; white-space: nowrap; scroll-snap-align: start; }
+  #search-input { text-overflow: ellipsis; }
+  .queue-track-item { min-height: 56px; }
+  .queue-track-item .queue-like-btn, .queue-track-item .queue-remove-btn { box-sizing: border-box; width: 44px; height: 44px; padding: 0; margin: 0 -6px; justify-self: center; }
+  .queue-track-item .drag-handle { height: 44px; touch-action: none; }
+}
+@media (hover: none) {
+  .queue-track-item .queue-like-btn { opacity: 1; }
+}

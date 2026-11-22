@@ -6847,5 +6847,13 @@
   sel.addEventListener("change", () => { if (sel.value === "UNDERTOW_ALAC" && !ok) note("This browser says it can't play ALAC, so songs may stay silent. ALAC works in Safari and on Apple devices. Pick MP3 or Lossless instead."); });
 } catch {} })();
 </script>
+    <script>/* undertow-search-placeholder: the full placeholder is too long for a phone in the pixel font */
+(() => { try {
+  const i = document.getElementById("search-input"); if (!i) return;
+  const full = i.getAttribute("placeholder") || "", short = "Search songs, artists", m = matchMedia("(max-width: 768px)");
+  const sync = () => i.setAttribute("placeholder", m.matches ? short : full);
+  sync(); m.addEventListener("change", sync);
+} catch {} })();
+</script>
     </body>
 </html>
