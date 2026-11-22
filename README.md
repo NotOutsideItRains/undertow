@@ -111,12 +111,7 @@ Issues and pull requests are welcome. There are no dependencies to install. Chec
 
 ## License
 
-<<<<<<< HEAD
-The [Undertow Community License](LICENSE): free to use, modify and redistribute, the source must stay open, and it may not be sold. Strictly speaking that is "source available / non-commercial", since the OSI's open-source definition does not allow a no-selling rule. The bundled Monochrome code keeps its own license (`web-mono/LICENSE-monochrome.txt`).
-
-=======
 The [Undertow Community License](LICENSE): free to use, modify, redistribute and even sell, as long as you keep the copyright notice and the source stays open. The bundled Monochrome code keeps its own license (`web-mono/LICENSE-monochrome.txt`).
->>>>>>> origin/main
 
 ## What is in here
 
@@ -153,7 +148,6 @@ For the people an admin allowed (the same rule as the first player: an admin, or
 - A song that is not one of Undertow's (no `/audio/<id>` address) plays on the device instead. The choice is remembered per browser.
 - The sound card is picked as for the first player (`SPEAKER_DEVICE`, `SPEAKER_NAME` and `SPEAKER_CARD` in the environment override the detection).
 
-<<<<<<< HEAD
 ## Monochrome Connect
 
 Like Spotify Connect: the speaker button in Monochrome lists your devices next to the server speakers, and a song can play on any of them while the page is the remote (play, pause, seek, volume and the next song all work). Three kinds of device:
@@ -172,8 +166,6 @@ How it is built (`lib/connect.mjs`, routes in `lib/playerhost.mjs` under `/__off
 - Client: `monochrome-port/undertow-speaker.js` (the picker) and `monochrome-port/connect-receiver.{html,js}` (the `/connect` page), copied by `patch.py` into a rebuild; `web-mono/` holds the built copies (they must stay identical).
 - Tests for the receiver: `python3 -m unittest discover -s connect -v`.
 
-=======
->>>>>>> origin/main
 ## Seasonal touches
 
 `web/seasonal.js` adds small special-day effects to the Undertow site and to Monochrome (one file, loaded by both; `patch.py` copies it into the Monochrome build, and `web-mono/seasonal.js` is that copy, so edit `web/seasonal.js` and copy it over). It uses the visitor's own clock and time zone, not the server's, and does nothing on an ordinary day.
