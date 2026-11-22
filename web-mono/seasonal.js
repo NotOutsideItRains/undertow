@@ -110,7 +110,7 @@
         p.ph += dt * 0.9; p.y += p.vy * dt; p.x += Math.sin(p.ph) * p.sw * dt + 6 * dt;
         if (p.y > H + 8 || p.x > W + 10) amb.items[i] = Object.assign(flake(false), { x: p.x > W + 10 ? -8 : rand(0, W) });
         g.globalAlpha = clamp(0.5 + p.r / 8, 0.5, 0.95);
-        g.fillStyle = "#fff"; g.strokeStyle = "rgba(110,150,190,.55)"; g.lineWidth = 0.8;
+        g.fillStyle = "#fff"; g.strokeStyle = "rgba(60,100,155,.85)"; g.lineWidth = 1; // the outline is what shows on a light page
         g.beginPath(); g.arc(p.x, p.y, p.r, 0, 6.2832); g.fill(); g.stroke();
       } else if (amb.kind === "hearts") {
         p.ph += dt; p.y += p.vy * dt; p.x += Math.sin(p.ph) * 18 * dt;
@@ -185,7 +185,7 @@
     if (!bannerEl) {
       bannerEl = document.createElement("div");
       bannerEl.setAttribute("role", "status");
-      bannerEl.style.cssText = "position:fixed;left:0;right:0;top:16%;text-align:center;z-index:100000;pointer-events:none;color:#fff;font-weight:800;font-size:clamp(1.6rem,6vw,3.4rem);line-height:1.1;text-shadow:0 2px 14px rgba(0,0,0,.65),0 0 3px rgba(0,0,0,.6);padding:0 16px";
+      bannerEl.style.cssText = "position:fixed;left:50%;top:18%;transform:translateX(-50%);max-width:92vw;box-sizing:border-box;text-align:center;z-index:100000;pointer-events:none;color:#fff;font-weight:800;font-size:clamp(1.6rem,6vw,3.4rem);line-height:1.15;text-shadow:0 2px 12px rgba(0,0,0,.6);padding:.18em .6em;border-radius:.4em;background:rgba(6,24,32,.62);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)";
       document.body.appendChild(bannerEl);
     }
     bannerEl.textContent = text;
@@ -225,6 +225,7 @@
   const FLAG = ["#002B7F", "#FCD116", "#CE1126"];
   const dataSvg = (svg) => "data:image/svg+xml," + encodeURIComponent(svg);
   const monoFlagIcon = () => dataSvg(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 3 3" shape-rendering="crispEdges"><path fill="${FLAG[0]}" d="M0 1h1v2H0z"/><path fill="${FLAG[1]}" d="M1 0h1v1H1zM1 2h1v1H1z"/><path fill="${FLAG[2]}" d="M2 0h1v2H2z"/></svg>`);
+  const monoAppIconFlag = () => dataSvg(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024"><rect width="1024" height="1024" fill="#000"/><g transform="translate(128 128) scale(256)" shape-rendering="crispEdges"><path fill="${FLAG[0]}" d="M0 1h1v2H0z"/><path fill="${FLAG[1]}" d="M1 0h1v1H1zM1 2h1v1H1z"/><path fill="${FLAG[2]}" d="M2 0h1v2H2z"/></g></svg>`);
   const undertowFlagIcon = () => dataSvg(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><clipPath id="c"><rect width="64" height="64" rx="12"/></clipPath></defs><g clip-path="url(#c)"><rect width="21.4" height="64" fill="${FLAG[0]}"/><rect x="21.3" width="21.4" height="64" fill="${FLAG[1]}"/><rect x="42.6" width="21.4" height="64" fill="${FLAG[2]}"/></g><path d="M20 14v20a12 12 0 0 0 24 0V14" fill="none" stroke="#061820" stroke-width="10.5" stroke-linecap="round" opacity=".5"/><path d="M20 14v20a12 12 0 0 0 24 0V14" fill="none" stroke="#fff" stroke-width="6.5" stroke-linecap="round"/></svg>`);
   let flagCount = 0, flagObserver = null, flagTimer = 0;
   const paintFlag = () => {
@@ -237,14 +238,16 @@
       g.dataset.ulFill = g.getAttribute("fill") || "";
       g.setAttribute("fill", `url(#${id})`);
     });
-    document.querySelectorAll('img[src^="/icon.svg"]:not([data-ul-src])').forEach((img) => { img.dataset.ulSrc = img.getAttribute("src"); img.src = undertowFlagIcon(); });
+    const swap = (img, flag) => { if (!img.dataset.ulSrc) img.dataset.ulSrc = img.getAttribute("src"); img.src = flag; };
+    document.querySelectorAll('img[src^="/icon.svg"]').forEach((img) => swap(img, undertowFlagIcon()));
+    document.querySelectorAll('img[src*="appicon.png"]').forEach((img) => swap(img, monoAppIconFlag()));
     document.querySelectorAll('link[rel~="icon"]:not([data-ul-href])').forEach((l) => { l.dataset.ulHref = l.getAttribute("href"); l.href = mono ? monoFlagIcon() : undertowFlagIcon(); l.type = "image/svg+xml"; });
   };
   const flagOn = () => {
     paintFlag();
     if (!flagObserver) {
       flagObserver = new MutationObserver(() => { clearTimeout(flagTimer); flagTimer = setTimeout(paintFlag, 150); }); // the apps redraw their logos as pages change
-      flagObserver.observe(document.body, { childList: true, subtree: true });
+      flagObserver.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ["src"] });
     }
   };
   const flagOff = () => {
