@@ -4,7 +4,7 @@
 //   Falling or floating things ...  December: snow | 14 Feb: hearts | 17 Mar: shamrocks | 21 Jun (World Music Day): music notes
 //                                   23 Sep - 15 Nov: autumn leaves | 31 Oct: pumpkins and bats
 //   The logo and the browser-tab icon ... 24-26 Dec: a Santa hat | June: a rainbow | for Romanian visitors: the Romanian flag on 1 Dec (National Day),
-//                                   24 Jan (Union Day) and 9 May (Independence Day), and a red-and-white Martisor on 1 Mar | 1 Apr: upside down
+//                                   24 Jan (Union Day) and 9 May (Independence Day), and a red-and-white Martisor on 1-8 Mar | 1 Apr: upside down
 //                                   "Romanian" = the browser's language is Romanian, or its time zone is Bucharest or Chisinau.
 //   New Year ................... a countdown in the last 10 seconds of 31 December, then fireworks at midnight (if the page is open), and a short
 //                                show the first time the site is opened on 1 January
@@ -68,7 +68,7 @@
     hat: pick("hat", month === 11 && day >= 24 && day <= 26),
     rainbow: pick("rainbow", month === 5),
     flag: pick("flag", ro && (is(11, 1) || is(0, 24) || is(4, 9))),
-    martisor: pick("martisor", ro && is(2, 1)),
+    martisor: pick("martisor", ro && month === 2 && day >= 1 && day <= 8), // the Martisor is given from 1 to 8 March
     april: pick("april", is(3, 1)),
     newyear: pick("newyear", (month === 11 && day === 31) || (month === 0 && day === 1)),
     may4: pick("may4", is(4, 4)),

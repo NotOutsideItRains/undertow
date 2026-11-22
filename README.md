@@ -30,7 +30,7 @@ Not in git (see `.gitignore`): `data.json` and the other runtime state, `.secret
 | 31 December / 1 January | A countdown in the last 10 seconds, fireworks at midnight; one short show the first time the site is opened on 1 January |
 | 24-26 December | A Santa hat on the logo |
 | 14 February | Hearts |
-| 1 March (Romanian) | A red-and-white Martisor logo |
+| 1-8 March (Romanian) | A red-and-white Martisor logo |
 | 17 March | Shamrocks |
 | 1 April | The logos are upside down |
 | 4 May | "May the Fourth be with you" and a lightsaber sweeping across the screen (once per tab session) |
