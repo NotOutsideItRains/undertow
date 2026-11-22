@@ -1,7 +1,7 @@
 # The second player (Monochrome)
 
 `web-mono/` is [Monochrome](https://github.com/monochrome-music/monochrome) (Apache-2.0), built with `patch.py` applied. Undertow serves it on its own address
-(`PLAYER_HOST`, default `otter-player.outsideitrains.com`), behind Undertow's logins, with a gateway at `/hifi/` that answers from Undertow's TIDAL accounts.
+(`PLAYER_HOST`, default empty: the second player is off until you set it, for example `player.example.com`), behind Undertow's logins, with a gateway at `/hifi/` that answers from Undertow's TIDAL accounts.
 The server side is `lib/playerhost.mjs`.
 
 Rebuild after a Monochrome update:
