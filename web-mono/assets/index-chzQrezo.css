@@ -9,11 +9,21 @@
   #fullscreen-cover-overlay .fullscreen-track-info, #fullscreen-cover-overlay .fullscreen-track-text { grid-template-columns: minmax(0, 1fr); min-width: 0; }
 }
 
-/* ul-touch-targets: the like heart and the three-dot menu in song rows were about 24px on a phone, too small to press. The hit area is 44px; negative margins keep the row layout as it was. */
+/* ul-touch-targets: the like heart and the three-dot menu in song rows were about 24px on a phone, too small to press. The hit area is 44px, with side margins so the title keeps its room. The rows themselves are bigger too. */
 @media (max-width: 768px), (pointer: coarse) {
-  .track-item { min-height: 48px; }
+  /* bigger rows: a 48px cover, more padding, a slightly larger title (the grids below only change the first column, to 48px) */
+  .track-item { min-height: 64px; padding: .5rem; gap: .5rem; }
+  .track-item { grid-template-columns: 48px 1fr 40px auto; }
+  .track-item.track-item--inline-like { grid-template-columns: 48px minmax(0, 1fr) auto minmax(2.25rem, auto) auto; }
+  .track-item.no-duration { grid-template-columns: 48px 1fr auto; }
+  .track-item.no-duration.track-item--inline-like { grid-template-columns: 48px minmax(0, 1fr) auto auto; }
+  .track-item .track-item-cover { width: 48px; height: 48px; border-radius: 8px; }
+  .track-item .track-number { width: 48px; }
+  .track-item .track-item-actions { min-width: 0; }
+  .track-item-details .title { font-size: 1rem; }
+  .track-item-details .artist, .track-item-duration { font-size: .82rem; }
   .track-item .track-row-like-btn, .track-item .track-menu-btn, .track-item .track-action-btn {
-    box-sizing: border-box; min-width: 44px; min-height: 44px; padding: 0; margin: -6px -6px;
+    box-sizing: border-box; min-width: 44px; min-height: 44px; padding: 0; margin: 0 -8px;
     display: inline-flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent;
   }
   .track-item .track-row-like-btn svg, .track-item .track-menu-btn svg, .track-item .track-action-btn svg { width: 20px; height: 20px; }
