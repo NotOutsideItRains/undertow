@@ -5,7 +5,10 @@
 set -eu
 cd "$(dirname "$0")"
 VERSION="${VERSION:-1.0.0}"
-LDFLAGS="-s -w -X main.version=$VERSION"
+# ORIGINS = the addresses of YOUR Undertow (main site and player, comma separated) that may talk to the app. CLIENT_ID = a Discord application ID of your own (optional; without it the app uses the shared "Monochrome Player" one, which anyone may use).
+#   ORIGINS=https://music.example.com,https://player.example.com ./build.sh
+ORIGINS="${ORIGINS:-http://localhost:7000}"
+LDFLAGS="-s -w -X main.version=$VERSION -X main.defaultOrigins=$ORIGINS${CLIENT_ID:+ -X main.defaultClientID=$CLIENT_ID}"
 export CGO_ENABLED=0
 rm -rf dist build && mkdir -p dist build
 

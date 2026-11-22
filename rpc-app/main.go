@@ -24,7 +24,7 @@ func main() {
 	var allow listFlag
 	port := flag.Int("port", 0, "port to listen on (default 8892)")
 	clientID := flag.String("client-id", "", "Discord application ID to show the card under")
-	server := flag.String("server", "", "relay: your Undertow address, like https://quiet-otter.outsideitrains.com (saved)")
+	server := flag.String("server", "", "relay: your Undertow address, like https://undertow.example.com (saved)")
 	relayKey := flag.String("relay-key", "", "relay: the key made on Undertow's Discord tab (saved)")
 	noRelay := flag.Bool("no-relay", false, "turn the relay off and forget its key")
 	showVersion := flag.Bool("version", false, "print the version and exit")
@@ -53,7 +53,7 @@ func main() {
 		if *server != "" {
 			s := cleanServer(*server)
 			if s == "" {
-				fmt.Println("That isn't an Undertow address. Use something like https://quiet-otter.outsideitrains.com")
+				fmt.Println("That isn't an Undertow address. Use something like https://undertow.example.com")
 				os.Exit(2)
 			}
 			cfg.Server = s
