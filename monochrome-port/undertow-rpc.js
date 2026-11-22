@@ -3,7 +3,7 @@
 const BASE = 'http://127.0.0.1:8892';
 const KEY = 'undertow-rpc';
 const RELAY = 'undertow-rpc-relay'; // also tell Undertow, so the presence app on another computer can show it
-const MAIN = 'https://quiet-otter.outsideitrains.com/';
+const MAIN = location.origin + '/'; // where the Undertow Presence app is offered: this server
 
 const enabled = () => {
     try {

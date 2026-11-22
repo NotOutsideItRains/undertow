@@ -1086,7 +1086,7 @@ const STATIC = {
   "/vendor/monocraft.woff2": ["vendor/monocraft.woff2", "font/woff2"],
   "/vendor/LICENSES.txt": ["vendor/LICENSES.txt", "text/plain; charset=utf-8"],
 };
-const CSP = `default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' wss://${new URL(process.env.MAIN_URL || process.env.PUBLIC_URL || "https://quiet-otter.outsideitrains.com").host} http://127.0.0.1:8892; frame-ancestors 'none'; base-uri 'none'; form-action 'self'`;
+const CSP = `default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' wss://${new URL(process.env.MAIN_URL || process.env.PUBLIC_URL || "http://localhost:7000").host} http://127.0.0.1:8892; frame-ancestors 'none'; base-uri 'none'; form-action 'self'`;
 
 http
   .createServer(async (req, res) => {

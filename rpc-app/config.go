@@ -11,7 +11,7 @@ import (
 // Set when building (see build.sh): the Discord application the card is shown under, and the sites allowed to talk to this app.
 var (
 	defaultClientID = "1573709606671356118" // "Monochrome Player"
-	defaultOrigins  = "https://quiet-otter.outsideitrains.com,https://otter-player.outsideitrains.com"
+	defaultOrigins  = "http://localhost:7000" // your own addresses go here: build with ORIGINS=... (see build.sh) or run with --allow
 	version         = "1.1.0"
 )
 
@@ -19,7 +19,7 @@ type Config struct {
 	ClientID string   `json:"clientId,omitempty"`
 	Origins  []string `json:"origins,omitempty"`
 	Port     int      `json:"port,omitempty"`
-	Server   string   `json:"server,omitempty"`   // relay: the Undertow address, like https://quiet-otter.outsideitrains.com
+	Server   string   `json:"server,omitempty"`   // relay: the Undertow address, like https://undertow.example.com
 	RelayKey string   `json:"relayKey,omitempty"` // relay: the key made on Undertow's Discord tab
 }
 

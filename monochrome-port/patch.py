@@ -959,6 +959,11 @@ def speaker_html(s):
 edit("index.html", speaker_html)
 
 
+# ---- Monochrome Connect's web receiver: a page (/connect) that makes a browser a device you can play on; no script tag in Monochrome's own page ----
+shutil.copyfile(PORT / "connect-receiver.html", root / "public" / "connect.html")
+shutil.copyfile(PORT / "connect-receiver.js", root / "public" / "connect.js")
+
+
 def recode_api(s):
     if "undertow-recode" in s:
         return s
