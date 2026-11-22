@@ -820,6 +820,27 @@ def recode_html(s):
 edit("index.html", recode_html)
 
 
+def alac_warn_html(s):
+    if "undertow-alac-warn" in s:
+        return s
+    assert "    </body>" in s, "index.html: no </body>"
+    return s.replace("    </body>", ALAC_WARN + "    </body>", 1)
+
+
+ALAC_WARN = r'''    <script>/* undertow-alac-warn: ALAC only plays in Safari and on Apple devices */
+(() => { try {
+  const ok = !!document.createElement("audio").canPlayType('audio/mp4; codecs="alac"');
+  const sel = document.getElementById("streaming-quality-setting"); if (!sel) return;
+  const opt = sel.querySelector('option[value="UNDERTOW_ALAC"]');
+  if (opt && !ok) opt.textContent += " (this browser says it can't play it)";
+  const note = (m) => { const d = document.createElement("div"); d.textContent = m; d.style.cssText = "position:fixed;left:50%;bottom:90px;transform:translateX(-50%);max-width:90vw;padding:10px 16px;border-radius:8px;background:#7a1f1f;color:#fff;font:14px sans-serif;z-index:99999"; document.body.appendChild(d); setTimeout(() => d.remove(), 7000); };
+  sel.addEventListener("change", () => { if (sel.value === "UNDERTOW_ALAC" && !ok) note("This browser says it can't play ALAC, so songs may stay silent. ALAC works in Safari and on Apple devices. Pick MP3 or Lossless instead."); });
+} catch {} })();
+</script>
+'''
+edit("index.html", alac_warn_html)
+
+
 def recode_api(s):
     if "undertow-recode" in s:
         return s
