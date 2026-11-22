@@ -840,6 +840,80 @@ ALAC_WARN = r'''    <script>/* undertow-alac-warn: ALAC only plays in Safari and
 '''
 edit("index.html", alac_warn_html)
 
+MOBILE_META_CLAMP = r'''
+/* ul-mobile-meta-clamp: a long title or album name on a phone took three lines and crowded the fullscreen player. Title: 2 lines, album and artist: 1 line each, with an ellipsis. */
+@media (max-width: 768px) {
+  #fullscreen-cover-overlay #fullscreen-track-title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
+  #fullscreen-cover-overlay #fullscreen-track-album, #fullscreen-cover-overlay #fullscreen-track-artist { display: block; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #fullscreen-cover-overlay #fullscreen-track-album { font-size: .84rem; }
+  /* both are grids with auto columns, which grow to fit no-wrap text instead of cutting it */
+  #fullscreen-cover-overlay .fullscreen-track-info, #fullscreen-cover-overlay .fullscreen-track-text { grid-template-columns: minmax(0, 1fr); min-width: 0; }
+}
+'''
+edit("styles.css", lambda s: s if "ul-mobile-meta-clamp" in s else s + MOBILE_META_CLAMP)
+
+TOUCH_TARGETS = r'''
+/* ul-touch-targets: the like heart and the three-dot menu in song rows were about 24px on a phone, too small to press. The hit area is 44px, with side margins so the title keeps its room. The rows themselves are bigger too. */
+@media (max-width: 768px), (pointer: coarse) {
+  /* bigger rows: a 48px cover, more padding, a slightly larger title (the grids below only change the first column, to 48px) */
+  .track-item { min-height: 64px; padding: .5rem; gap: .5rem; }
+  .track-item { grid-template-columns: 48px 1fr 40px auto; }
+  .track-item.track-item--inline-like { grid-template-columns: 48px minmax(0, 1fr) auto minmax(2.25rem, auto) auto; }
+  .track-item.no-duration { grid-template-columns: 48px 1fr auto; }
+  .track-item.no-duration.track-item--inline-like { grid-template-columns: 48px minmax(0, 1fr) auto auto; }
+  .track-item .track-item-cover { width: 48px; height: 48px; border-radius: 8px; }
+  .track-item .track-number { width: 48px; }
+  .track-item .track-item-actions { min-width: 0; }
+  .track-item-details .title { font-size: 1rem; }
+  .track-item-details .artist, .track-item-duration { font-size: .82rem; }
+  .track-item .track-row-like-btn, .track-item .track-menu-btn, .track-item .track-action-btn {
+    box-sizing: border-box; min-width: 44px; min-height: 44px; padding: 0; margin: 0 -8px;
+    display: inline-flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent;
+  }
+  .track-item .track-row-like-btn svg, .track-item .track-menu-btn svg, .track-item .track-action-btn svg { width: 20px; height: 20px; }
+}
+'''
+edit("styles.css", lambda s: s if "ul-touch-targets" in s else s + TOUCH_TARGETS)
+
+UI_FIXES_2 = r'''
+/* ul-ui-fixes-2: three phone fixes.
+   1. The home tabs scroll sideways, but they were allowed to shrink, so the no-wrap labels ran into each other ("Editor's Picks" over "AOTY").
+   2. The search placeholder is cut with an ellipsis instead of a hard clip.
+   3. Queue panel: 44px hit areas for the heart and remove buttons (the grid columns stay 32px), a 44px-tall drag handle, and the heart is not faded on touch screens. */
+@media (max-width: 768px), (pointer: coarse) {
+  .home-header-tabs { scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; padding-right: 1rem; }
+  .home-header-tabs .home-tab { flex: 0 0 auto; white-space: nowrap; scroll-snap-align: start; }
+  #search-input { text-overflow: ellipsis; }
+  .queue-track-item { min-height: 56px; }
+  .queue-track-item .queue-like-btn, .queue-track-item .queue-remove-btn { box-sizing: border-box; width: 44px; height: 44px; padding: 0; margin: 0 -6px; justify-self: center; }
+  .queue-track-item .drag-handle { height: 44px; touch-action: none; }
+}
+@media (hover: none) {
+  .queue-track-item .queue-like-btn { opacity: 1; }
+}
+'''
+edit("styles.css", lambda s: s if "ul-ui-fixes-2" in s else s + UI_FIXES_2)
+
+SEARCH_PLACEHOLDER = r'''    <script>/* undertow-search-placeholder: the full placeholder is too long for a phone in the pixel font */
+(() => { try {
+  const i = document.getElementById("search-input"); if (!i) return;
+  const full = i.getAttribute("placeholder") || "", short = "Search songs, artists", m = matchMedia("(max-width: 768px)");
+  const sync = () => i.setAttribute("placeholder", m.matches ? short : full);
+  sync(); m.addEventListener("change", sync);
+} catch {} })();
+</script>
+'''
+
+
+def search_placeholder_html(s):
+    if "undertow-search-placeholder" in s:
+        return s
+    assert "    </body>" in s, "index.html: no </body>"
+    return s.replace("    </body>", SEARCH_PLACEHOLDER + "    </body>", 1)
+
+
+edit("index.html", search_placeholder_html)
+
 
 def recode_api(s):
     if "undertow-recode" in s:

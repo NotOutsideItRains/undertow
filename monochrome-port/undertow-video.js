@@ -120,6 +120,11 @@ class UndertowVideo {
         const el = this.el;
         const audio = this.audio;
         if (!el || !audio || !this.loaded || !el.duration) return;
+        if (this.smallScreenLyrics()) { // on a phone the lyrics fill the screen and the picture shrinks to a thumbnail: show the cover while they are on; turning them off brings the video back
+            if (!el.paused) el.pause();
+            this.hide();
+            return;
+        }
         let target = audio.currentTime + this.off;
         for (const [a, b] of this.skips) if (target >= a) target += b - a;
         if (target < 0) {
@@ -140,6 +145,11 @@ class UndertowVideo {
         el.playbackRate = Math.abs(drift) > 0.04 && Math.abs(drift) <= 0.25 ? (drift > 0 ? 0.96 : 1.04) * audio.playbackRate : audio.playbackRate;
         if (!audio.paused && el.paused) el.play().catch(() => {});
         if (audio.paused && !el.paused) el.pause();
+    }
+
+    smallScreenLyrics() {
+        const overlay = document.getElementById('fullscreen-cover-overlay');
+        return !!overlay && matchMedia('(max-width: 768px)').matches && !overlay.classList.contains('lyrics-hidden');
     }
 
     show() {
