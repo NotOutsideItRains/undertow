@@ -2,6 +2,8 @@
 
 A self-hosted music server and player built around TIDAL. It is closed source and private: all rights reserved, not for redistribution. The bundled Monochrome code keeps its own license (`web-mono/LICENSE-monochrome.txt`).
 
+The whole app is vibe-coded: it was written with AI (Claude Code) from plain-language requests, not by hand.
+
 Plain Node.js (ESM) with no npm dependencies. One process serves everything on `:7000` (`PORT` to change it).
 
 ## What is in here
