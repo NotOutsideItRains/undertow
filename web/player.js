@@ -9,7 +9,7 @@ const $ = (s, r = root) => r.querySelector(s);
 const mmss = (s) => (Number.isFinite(s) ? `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}` : "0:00");
 const SYNC_LABEL = { word: "Karaoke", line: "Line synced", plain: "Plain" };
 const CAN_ALAC = (() => { try { return !!document.createElement("audio").canPlayType('audio/mp4; codecs="alac"'); } catch { return true; } })(); // only Safari and Apple devices play ALAC
-const QUALITY = [["HI_RES", "Lossless"], ["HIGH", "High (AAC 320)"], ["LOW", "Low (AAC 96)"], ["ALAC", `Lossless as ALAC (converted)${CAN_ALAC ? "" : " (this browser says it can't play it)"}`], ["MP3", "MP3 V0 (converted, plays anywhere)"]];
+const QUALITY = [["HI_RES", "Lossless"], ["HIGH", "High (AAC 320)"], ["LOW", "Low (AAC 96)"], ["ALAC", `Lossless as ALAC (converted)${CAN_ALAC ? "" : " (not supported here)"}`], ["MP3", "MP3 V0 (converted, plays anywhere)"]];
 
 export function openPlayer(c) {
   ctx = c;

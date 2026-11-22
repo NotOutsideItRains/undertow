@@ -23,6 +23,7 @@ import { discordOn } from "./lib/discord.mjs";
 import { Readable } from "node:stream";
 import os from "node:os";
 import { assemble } from "./lib/remux.mjs";
+import { serveFile as serveStaticFile, sendBody, warm as warmCompressed } from "./lib/compress.mjs";
 import { spawn, execFile } from "node:child_process";
 import crypto from "node:crypto";
 
@@ -71,10 +72,7 @@ async function eclipseManifest(link) {
     settings: [...m.settings, ...(video.available() ? [{ key: "video", type: "toggle", label: "Music videos", help: "From YouTube, when a song has a real video. Adds a short wait the first time a song plays.", default: true }] : [])],
   };
 }
-const json = (res, body, status = 200, headers = {}) => {
-  res.writeHead(status, { "Content-Type": "application/json", "Cache-Control": "no-store", ...headers });
-  res.end(JSON.stringify(body));
-};
+const json = (res, body, status = 200, headers = {}) => sendBody(res, status, JSON.stringify(body), { "Content-Type": "application/json", "Cache-Control": "no-store", ...headers });
 const sleep = (ms) => new Promise((ok) => setTimeout(ok, ms));
 
 // Requested tier (BitChord's "lossless" includes hi-res) clamped to what the link allows.
@@ -1183,12 +1181,10 @@ http
         // BitChord itself asking for the root gets the manifest; people and chat apps get the page.
         if (u.pathname === "/" && /BitChord/i.test(req.headers["user-agent"] || "") && link.enabled) { u.pathname = "/manifest.json"; return await addon(req, res, link, u); }
         if (u.pathname === "/status" && (req.method === "GET" || req.method === "HEAD")) {
-          res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "Content-Security-Policy": CSP, "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer" });
-          return void res.end(req.method === "HEAD" ? undefined : statusPage(req, link));
+          return void sendBody(res, 200, req.method === "HEAD" ? "" : statusPage(req, link), { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "Content-Security-Policy": CSP, "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer" });
         }
         if (u.pathname === "/" && (req.method === "GET" || req.method === "HEAD") && link.enabled) {
-          res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", Vary: "User-Agent", "Content-Security-Policy": CSP, "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer" });
-          return void res.end(req.method === "HEAD" ? undefined : addonPage(req, link));
+          return void sendBody(res, 200, req.method === "HEAD" ? "" : addonPage(req, link), { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", Vary: "User-Agent", "Content-Security-Policy": CSP, "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer" });
         }
         return void res.writeHead(404).end();
       }
@@ -1221,8 +1217,7 @@ http
         } catch (e) { if (rs.headersSent) return void rs.destroy(); json(rs, { error: { status: e.status || 502, message: e.message } }, e.status || 502, e.retryAfter ? { "Retry-After": e.retryAfter } : {}); }
       } });
       if (/^\/join\/[a-f0-9]{4,32}$/.test(u.pathname) && (req.method === "GET" || req.method === "HEAD")) { // a friend opening a shared link's invite
-        res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "Content-Security-Policy": CSP, "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer" });
-        return void res.end(req.method === "HEAD" ? undefined : await fs.promises.readFile(WEB + "join.html"));
+        return void sendBody(res, 200, req.method === "HEAD" ? "" : await fs.promises.readFile(WEB + "join.html"), { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "Content-Security-Policy": CSP, "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer" });
       }
       if (u.pathname.startsWith("/api/play/")) return await playApi(req, res, u);
       if (u.pathname.startsWith("/api/")) return await handleApi(req, res, u.pathname.slice(4));
@@ -1236,10 +1231,14 @@ http
       }
       const file = STATIC[u.pathname];
       if (file && (req.method === "GET" || req.method === "HEAD")) {
-        let body = await fs.promises.readFile(WEB + file[0]);
-        if (u.pathname === "/") body = shell(req, body.toString(), u.searchParams);
-        res.writeHead(200, { "Content-Type": file[1], "Cache-Control": "no-cache", "Content-Security-Policy": CSP, "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer", "X-Frame-Options": "DENY" });
-        return void res.end(req.method === "HEAD" ? undefined : body);
+        const secure = { "Content-Security-Policy": CSP, "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer", "X-Frame-Options": "DENY" };
+        if (u.pathname === "/") { // the page is made for each visit (invite previews and so on): no ETag, but it is compressed
+          const html = shell(req, (await fs.promises.readFile(WEB + file[0])).toString(), u.searchParams);
+          return void sendBody(res, 200, req.method === "HEAD" ? "" : html, { "Content-Type": file[1], "Cache-Control": "no-cache", ...secure });
+        }
+        // the two files the page names with ?v=<their own time> have a new address whenever they change, so the browser may keep them for good; the rest is checked with an ETag
+        const versioned = (u.pathname === "/app.js" || u.pathname === "/style.css") && u.searchParams.has("v");
+        return void await serveStaticFile(req, res, WEB + file[0], await fs.promises.stat(WEB + file[0]), { type: file[1], cache: versioned ? "public, max-age=31536000, immutable" : "no-cache", headers: secure });
       }
       console.log(new Date().toISOString(), "REJECTED", req.method, req.url.replace(/^\/[^/?]+/, "/<x>").slice(0, 120));
       res.writeHead(404).end();
@@ -1252,7 +1251,11 @@ http
     if (new URL(req.url, "http://x").pathname === "/api/parties/ws") return partyHost.upgrade(req, socket, head, { auth: playerHost.userOf, originOk: playerHost.originOk });
     socket.destroy();
   })
-  .listen(PORT, () => console.log(`BitChord addon + web UI on :${PORT}`));
+  .listen(PORT, () => {
+    console.log(`BitChord addon + web UI on :${PORT}`);
+    // compress the sites' text files ahead of time, in the background, so the first visitor does not wait for it
+    for (const dir of [WEB, new URL("./web-mono/", import.meta.url).pathname]) warmCompressed(dir).catch(() => {});
+  });
 
 // The pre-existing secret URL keeps working as the first link; its device stats are carried over once.
 if (SECRET && linkIndex.has(SECRET)) linkIndex.get(SECRET).primary = true; // keeps the original addon id even if its URL is rotated

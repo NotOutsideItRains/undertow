@@ -20,6 +20,16 @@ Plain Node.js (ESM) with no npm dependencies. One process serves everything on `
 
 Not in git (see `.gitignore`): `data.json` and the other runtime state, `.secret`, `.webhook`, accounts and avatars, caches, and `hifi-api/` (a separate clone).
 
+## Speed
+
+`lib/compress.mjs` makes both sites (Undertow's pages and Monochrome's) cheaper to load:
+
+- **Compression:** text (pages, scripts, styles, JSON, SVG) is sent brotli- or gzip-compressed when the browser accepts it. A file on disk is compressed once per version (its size and time) and kept in memory, and `server.mjs` compresses the two sites' files in the background at startup so the first visitor does not wait. Pages and JSON built on the fly are gzip-compressed when they are over 1 KB. Images, fonts, audio and video are never compressed, and range requests and streams are untouched.
+- **ETag:** files are sent with a weak ETag, so a file the browser already has costs a 304 and a few bytes.
+- **Cache lifetime:** `app.js` and `style.css` are named with `?v=<their own time>` by the page, so with a `v` they are kept for a year. Monochrome's hashed files were already kept for a year. Fonts with a plain name are kept for a week and pictures with a plain name for a day. Everything else (the pages, `seasonal.js`, `speaker.js`) is checked with its ETag on each visit.
+- **Behind Cloudflare:** its "Browser Cache TTL" setting (4 hours by default) can replace the `no-cache` on the files without a version, so `seasonal.js`, `speaker.js`, Monochrome's page and the other plain-named files may be kept by browsers for up to 4 hours (seen on the live site: `max-age=14400`). Files with a version or hash in their name are not affected. A change to a plain-named file can therefore take a few hours to reach people who visited recently, and after a Monochrome rebuild (new hashed file names) a recent visitor's cached page may point at files that no longer exist until it expires. In the Cloudflare dashboard, set Caching → Configuration → Browser Cache TTL to "Respect Existing Headers" to make the server's own headers count.
+- To use it for a new file route: `serveFile(req, res, file, stat, { type, cache, headers })` for a file on disk, `sendBody(res, status, body, headers)` for an answer built on the fly (it needs `res.req`, which Node sets).
+
 ## Server speakers in Monochrome
 
 For the people an admin allowed (the same rule as the first player: an admin, or a member with the speaker permission), Monochrome has a speaker button in the player bar. With it on, the song plays out of the server's sound card (ffmpeg into ALSA, `lib/speaker.mjs`) and the page is the remote: play, pause, seek and the next song work as usual, and a small panel above the player bar has the device name, a volume slider and Stop. People without access see nothing (the server answers 403 and the button is never added).
@@ -56,6 +66,9 @@ For the people an admin allowed (the same rule as the first player: an admin, or
 - To add a day: add it to the `today` table in `web/seasonal.js`, and a new falling thing to `KINDS` or a new logo to `SKINS` if it needs one.
 
 ## Rebuilding the second player
+
+**Careful: the upstream commit that `web-mono/` was built from is not recorded.** A fresh clone of Monochrome's `main` has moved on and gives different file hashes for every file, so a rebuild pulls in unrelated upstream changes (and a recent visitor's cached page may point at files that were replaced). Prefer patching the files in `web-mono/` directly, with the same change in `patch.py`, and if you do rebuild, build from a pinned commit and write it here: `git -C /tmp/mono rev-parse HEAD`. Upstream commit used for the current build: _unknown_.
+
 
 ```bash
 git clone --depth 1 https://github.com/monochrome-music/monochrome /tmp/mono
