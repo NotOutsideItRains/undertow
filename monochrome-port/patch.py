@@ -814,7 +814,7 @@ def recode_html(s):
         return s
     old = '                                        <option value="LOW">Low</option>\n                                    </select>'
     assert old in s, "index.html: streaming quality list changed upstream"
-    return s.replace(old, '                                        <option value="LOW">Low</option>\n                                        <option value="UNDERTOW_ALAC">Lossless as ALAC (converted by Undertow)</option>\n                                        <option value="UNDERTOW_MP3">MP3 V0 (converted by Undertow, plays anywhere)</option>\n                                    </select>', 1)
+    return s.replace(old, '                                        <option value="LOW">Low</option>\n                                        <option value="UNDERTOW_ALAC">ALAC (converted)</option>\n                                        <option value="UNDERTOW_MP3">MP3 V0 (converted)</option>\n                                    </select>', 1)
 
 
 edit("index.html", recode_html)
@@ -832,13 +832,29 @@ ALAC_WARN = r'''    <script>/* undertow-alac-warn: ALAC only plays in Safari and
   const ok = !!document.createElement("audio").canPlayType('audio/mp4; codecs="alac"');
   const sel = document.getElementById("streaming-quality-setting"); if (!sel) return;
   const opt = sel.querySelector('option[value="UNDERTOW_ALAC"]');
-  if (opt && !ok) opt.textContent += " (this browser says it can't play it)";
+  if (opt && !ok) opt.textContent = "ALAC (not supported here)"; // short: a <select> is as wide as its longest option, and the pixel font is wide
   const note = (m) => { const d = document.createElement("div"); d.textContent = m; d.style.cssText = "position:fixed;left:50%;bottom:90px;transform:translateX(-50%);max-width:90vw;padding:10px 16px;border-radius:8px;background:#7a1f1f;color:#fff;font:14px sans-serif;z-index:99999"; document.body.appendChild(d); setTimeout(() => d.remove(), 7000); };
   sel.addEventListener("change", () => { if (sel.value === "UNDERTOW_ALAC" && !ok) note("This browser says it can't play ALAC, so songs may stay silent. ALAC works in Safari and on Apple devices. Pick MP3 or Lossless instead."); });
 } catch {} })();
 </script>
 '''
 edit("index.html", alac_warn_html)
+
+
+SELECT_CAP = r'''<style>/* ul-select-cap: a <select> is as wide as its longest option, and the pixel font is wide, so a long option squeezed its label to nothing in Settings > Audio. This lives here and not in the hashed stylesheet, which browsers keep for a year. */
+#streaming-quality-setting{max-width:min(100%,22rem);min-width:0}
+</style>
+'''
+
+
+def select_cap_html(s):
+    if "ul-select-cap" in s:
+        return s
+    assert "</head>" in s, "index.html: no </head>"
+    return s.replace("</head>", SELECT_CAP + "</head>", 1)
+
+
+edit("index.html", select_cap_html)
 
 MOBILE_META_CLAMP = r'''
 /* ul-mobile-meta-clamp: a long title or album name on a phone took three lines and crowded the fullscreen player. Title: 2 lines, album and artist: 1 line each, with an ellipsis. */

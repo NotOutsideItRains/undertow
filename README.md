@@ -67,6 +67,9 @@ For the people an admin allowed (the same rule as the first player: an admin, or
 
 ## Rebuilding the second player
 
+**Careful: the upstream commit that `web-mono/` was built from is not recorded.** A fresh clone of Monochrome's `main` has moved on and gives different file hashes for every file, so a rebuild pulls in unrelated upstream changes (and a recent visitor's cached page may point at files that were replaced). Prefer patching the files in `web-mono/` directly, with the same change in `patch.py`, and if you do rebuild, build from a pinned commit and write it here: `git -C /tmp/mono rev-parse HEAD`. Upstream commit used for the current build: _unknown_.
+
+
 ```bash
 git clone --depth 1 https://github.com/monochrome-music/monochrome /tmp/mono
 python3 monochrome-port/patch.py /tmp/mono      # safe to run twice; stops if upstream changed

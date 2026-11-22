@@ -149,7 +149,10 @@
         </script>
       <script type="module" crossorigin src="./assets/index-DSoq7osY.js"></script>
       <link rel="stylesheet" crossorigin href="./assets/index-chzQrezo.css">
-    </head>
+    <style>/* ul-select-cap: a <select> is as wide as its longest option, and the pixel font is wide, so a long option squeezed its label to nothing in Settings > Audio. This lives here and not in the hashed stylesheet, which browsers keep for a year. */
+#streaming-quality-setting{max-width:min(100%,22rem);min-width:0}
+</style>
+</head>
 
     <body>
         <audio id="audio-player" crossorigin="anonymous" style="display: none"></audio>
@@ -4228,8 +4231,8 @@
                                         <option value="LOSSLESS">Lossless (16-bit)</option>
                                         <option value="HIGH">High</option>
                                         <option value="LOW">Low</option>
-                                        <option value="UNDERTOW_ALAC">Lossless as ALAC (converted by Undertow)</option>
-                                        <option value="UNDERTOW_MP3">MP3 V0 (converted by Undertow, plays anywhere)</option>
+                                        <option value="UNDERTOW_ALAC">ALAC (converted)</option>
+                                        <option value="UNDERTOW_MP3">MP3 V0 (converted)</option>
                                     </select>
                                 </div>
                                 <div
@@ -6842,7 +6845,7 @@
   const ok = !!document.createElement("audio").canPlayType('audio/mp4; codecs="alac"');
   const sel = document.getElementById("streaming-quality-setting"); if (!sel) return;
   const opt = sel.querySelector('option[value="UNDERTOW_ALAC"]');
-  if (opt && !ok) opt.textContent += " (this browser says it can't play it)";
+  if (opt && !ok) opt.textContent = "ALAC (not supported here)"; // short: a <select> is as wide as its longest option, and the pixel font is wide
   const note = (m) => { const d = document.createElement("div"); d.textContent = m; d.style.cssText = "position:fixed;left:50%;bottom:90px;transform:translateX(-50%);max-width:90vw;padding:10px 16px;border-radius:8px;background:#7a1f1f;color:#fff;font:14px sans-serif;z-index:99999"; document.body.appendChild(d); setTimeout(() => d.remove(), 7000); };
   sel.addEventListener("change", () => { if (sel.value === "UNDERTOW_ALAC" && !ok) note("This browser says it can't play ALAC, so songs may stay silent. ALAC works in Safari and on Apple devices. Pick MP3 or Lossless instead."); });
 } catch {} })();
