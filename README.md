@@ -1,6 +1,6 @@
 # Undertow
 
-A self-hosted music server and player built around TIDAL. **Open source**: read it, run it, change it, share it (but you may not sell it, see [LICENSE](LICENSE)). The bundled Monochrome code keeps its own license (`web-mono/LICENSE-monochrome.txt`).
+A self-hosted music server and player built around TIDAL. **Open source**: read it, run it, change it, share it, even sell it (see [LICENSE](LICENSE)). The bundled Monochrome code keeps its own license (`web-mono/LICENSE-monochrome.txt`).
 
 The whole app is vibe-coded: it was written with AI (Claude Code) from plain-language requests, not by hand.
 
@@ -74,6 +74,8 @@ Environment=TRUSTED_PROXIES=127.0.0.1
 
 Trying it on one machine? `PLAYER_HOST=127.0.0.1 node server.mjs` serves the Monochrome player on http://127.0.0.1:7000, while http://localhost:7000 stays the main site.
 
+**Using it in BitChord and Eclipse.** The addon for BitChord and Eclipse only works over a **public domain with HTTPS** (for example `https://music.example.com`, set as `PUBLIC_URL`). Those apps will not install an addon from `http://localhost`, a bare IP address or a plain-HTTP address. Get the addon links on the Users page (`https://music.example.com/<token>` for BitChord, and `.../<token>/eclipse` for Eclipse).
+
 **Updating.**
 
 ```bash
@@ -101,7 +103,7 @@ All optional, set as environment variables.
 
 - **Raspberry Pi / Bluetooth speaker receiver** (Monochrome Connect): `connect/README.md`.
 - **Discord voice bot**: `discord-bot/README.md`.
-- **Discord Rich Presence app**: `rpc-app/` (`./build.sh`, then copy the results to `downloads/`).
+- **Discord Rich Presence app**: `rpc-app/`. It is built with your addresses inside it, so **recompile it on your own computer** (needs Go, plus `rsvg-convert` and a type-2 AppImage for the Linux AppImage): `ORIGINS=https://music.example.com,https://player.example.com ./build.sh`, then copy the results from `rpc-app/dist/` to `downloads/`. Without `ORIGINS` it only trusts `http://localhost:7000`. A build you already have can be told about another site with `--allow https://music.example.com`. By default it shows the shared "Monochrome Player" Discord card, which anyone may use; set `CLIENT_ID=` to use your own Discord application.
 
 ## Contributing
 
@@ -109,8 +111,12 @@ Issues and pull requests are welcome. There are no dependencies to install. Chec
 
 ## License
 
+<<<<<<< HEAD
 The [Undertow Community License](LICENSE): free to use, modify and redistribute, the source must stay open, and it may not be sold. Strictly speaking that is "source available / non-commercial", since the OSI's open-source definition does not allow a no-selling rule. The bundled Monochrome code keeps its own license (`web-mono/LICENSE-monochrome.txt`).
 
+=======
+The [Undertow Community License](LICENSE): free to use, modify, redistribute and even sell, as long as you keep the copyright notice and the source stays open. The bundled Monochrome code keeps its own license (`web-mono/LICENSE-monochrome.txt`).
+>>>>>>> origin/main
 
 ## What is in here
 
@@ -147,6 +153,7 @@ For the people an admin allowed (the same rule as the first player: an admin, or
 - A song that is not one of Undertow's (no `/audio/<id>` address) plays on the device instead. The choice is remembered per browser.
 - The sound card is picked as for the first player (`SPEAKER_DEVICE`, `SPEAKER_NAME` and `SPEAKER_CARD` in the environment override the detection).
 
+<<<<<<< HEAD
 ## Monochrome Connect
 
 Like Spotify Connect: the speaker button in Monochrome lists your devices next to the server speakers, and a song can play on any of them while the page is the remote (play, pause, seek, volume and the next song all work). Three kinds of device:
@@ -165,6 +172,8 @@ How it is built (`lib/connect.mjs`, routes in `lib/playerhost.mjs` under `/__off
 - Client: `monochrome-port/undertow-speaker.js` (the picker) and `monochrome-port/connect-receiver.{html,js}` (the `/connect` page), copied by `patch.py` into a rebuild; `web-mono/` holds the built copies (they must stay identical).
 - Tests for the receiver: `python3 -m unittest discover -s connect -v`.
 
+=======
+>>>>>>> origin/main
 ## Seasonal touches
 
 `web/seasonal.js` adds small special-day effects to the Undertow site and to Monochrome (one file, loaded by both; `patch.py` copies it into the Monochrome build, and `web-mono/seasonal.js` is that copy, so edit `web/seasonal.js` and copy it over). It uses the visitor's own clock and time zone, not the server's, and does nothing on an ordinary day.
