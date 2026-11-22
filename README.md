@@ -39,6 +39,24 @@ For the people an admin allowed (the same rule as the first player: an admin, or
 - A song that is not one of Undertow's (no `/audio/<id>` address) plays on the device instead. The choice is remembered per browser.
 - The sound card is picked as for the first player (`SPEAKER_DEVICE`, `SPEAKER_NAME` and `SPEAKER_CARD` in the environment override the detection).
 
+## Monochrome Connect
+
+Like Spotify Connect: the speaker button in Monochrome lists your devices next to the server speakers, and a song can play on any of them while the page is the remote (play, pause, seek, volume and the next song all work). Three kinds of device:
+
+- **A Raspberry Pi (or any Linux box)**: `connect/agent.py`, one Python file (3.8+, standard library only) that the server also hands out at `/__off/connect/agent.py`. It plays with mpv or ffplay, or with **your own shell commands** in `~/.config/monochrome-connect/commands.ini` (play, volume, before/after, for waking a Bluetooth speaker and so on). See `connect/README.md`.
+- **Another screen**: open `/connect` in any browser, press Start, and that phone, laptop or TV is a device.
+- **The server speakers**: the existing sound-card speaker, in the same picker (still needs the speaker permission).
+
+How it is built (`lib/connect.mjs`, routes in `lib/playerhost.mjs` under `/__off/connect/`):
+
+- Receivers call the server, never the other way round: a long poll (`poll?since=N`, about 25 s) for commands and a status report about once a second. So it works behind NAT and the Cloudflare tunnel, and the server never connects to or runs anything on a device.
+- The only commands are play, pause, resume, seek, volume and stop. The server sends no shell. The values (song address, start second, volume, title) reach your commands only as environment variables (`MC_URL`, `MC_POS`, `MC_DUR`, `MC_VOL`, `MC_TITLE`), never pasted into a command line.
+- Pairing works like a TV app: the receiver shows a code (`ABCD-EFGH`, valid 10 minutes, single use), you type it into Monochrome, and the receiver then collects its own token. Only a hash of the token is stored, and removing the device in Monochrome revokes it. The receiver prints which account paired it.
+- Devices are owner-only (you only see and control your own, at most 10 each). Any signed-in user can use Connect; the server speakers keep their own permission.
+- Players get signed audio links (HMAC with the file key, bound to device, song and quality, 6 hours), so mpv or a browser tab needs no cookie. The agent refuses song addresses that are not on the server it paired with.
+- Client: `monochrome-port/undertow-speaker.js` (the picker) and `monochrome-port/connect-receiver.{html,js}` (the `/connect` page), copied by `patch.py` into a rebuild; `web-mono/` holds the built copies (they must stay identical).
+- Tests for the receiver: `python3 -m unittest discover -s connect -v`.
+
 ## Seasonal touches
 
 `web/seasonal.js` adds small special-day effects to the Undertow site and to Monochrome (one file, loaded by both; `patch.py` copies it into the Monochrome build, and `web-mono/seasonal.js` is that copy, so edit `web/seasonal.js` and copy it over). It uses the visitor's own clock and time zone, not the server's, and does nothing on an ordinary day.
