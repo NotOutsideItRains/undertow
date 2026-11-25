@@ -14,7 +14,7 @@ import * as motion from "./lib/motion.mjs";
 import * as library from "./lib/library.mjs";
 import { createBLyricsProvider, createLRCLibSyncedProvider, createLRCLibPlainProvider, createLegatoProvider, createPortatoProvider, createBinimumProvider } from "./lib/vendor/lyrics-providers.mjs";
 import { slowdownAlert, missAlert, inviteOpenedAlert } from "./lib/notify.mjs";
-import { handleApi, AVATAR_DIR, lastfmSend, lastfmStatus, lastfmPlayerStart, lastfmPlayerComplete, lastfmDisconnect, ipOf } from "./lib/api.mjs";
+import { handleApi, handleOAuth, AVATAR_DIR, lastfmSend, lastfmStatus, lastfmPlayerStart, lastfmPlayerComplete, lastfmDisconnect, ipOf } from "./lib/api.mjs";
 import * as publicApi from "./lib/publicapi.mjs";
 import * as playerHost from "./lib/playerhost.mjs";
 import { rpcInfo, rpcFile } from "./lib/rpcdl.mjs";
@@ -1079,6 +1079,8 @@ const STATIC = {
   "/rpc.js": ["rpc.js", "text/javascript; charset=utf-8"],
   "/seasonal.js": ["seasonal.js", "text/javascript; charset=utf-8"],
   "/party.js": ["party.js", "text/javascript; charset=utf-8"],
+  "/developers": ["developers.html", "text/html; charset=utf-8"],
+  "/developers.js": ["developers.js", "text/javascript; charset=utf-8"],
   "/interlude.gif": ["interlude.gif", "image/gif"],
   "/vendor/braccato.js": ["vendor/braccato.js", "text/javascript; charset=utf-8"],
   "/vendor/braccato.css": ["vendor/braccato.css", "text/css; charset=utf-8"],
@@ -1201,6 +1203,11 @@ http
           return page(403, `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sign in</title><body style="font:16px system-ui;padding:2rem;max-width:30rem;margin:auto"><p>${r?.error || "That didn't work."}</p>`);
         }
         return page(200, playerHost.mainSigninPage(id, discordOn(), APP_NAME));
+      }
+      if (u.pathname.startsWith("/oauth/") || u.pathname === "/.well-known/oauth-authorization-server") { // other apps asking a person for access to what they are playing (lib/oauth.mjs)
+        const host = String(req.headers["x-forwarded-host"] || req.headers.host || "");
+        const base = /^(localhost|127\.|\[::1\])/i.test(host) ? (process.env.PUBLIC_URL || `http://${host}`).replace(/\/+$/, "") : `${req.headers["x-forwarded-proto"] === "https" ? "https" : "http"}://${host}`;
+        if (await handleOAuth(req, res, u, base)) return;
       }
       if (u.pathname === "/v1" || u.pathname.startsWith("/v1/")) return await publicApi.handle(req, res, u, { ip: ipOf(req), call: (path, params) => withAccount(apiLink, (a) => accounts.call(a, path, params)), spec: publicApi.openapi, botToken: () => db.settings.discordBot?.token || "",
       subCover: coverUrls,
