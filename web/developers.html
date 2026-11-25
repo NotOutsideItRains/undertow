@@ -41,6 +41,7 @@ button.q{background:transparent;color:var(--t);box-shadow:inset 0 0 0 1px var(--
     <label>Name (people see this when they approve it)<input id="name" maxlength="40" autocomplete="off"></label>
     <label>Redirect addresses, one per line<textarea id="uris" rows="3" placeholder="https://example.com/callback&#10;http://localhost:8080/callback&#10;myapp://callback"></textarea></label>
     <label class="row" style="display:flex;align-items:center;gap:8px;font-weight:400"><input id="conf" type="checkbox" checked style="min-height:0"> It can keep a secret (a server). Untick for apps that run on someone's phone or computer or in a browser.</label>
+    <label class="row" style="display:flex;align-items:center;gap:8px;font-weight:400"><input id="audio" type="checkbox" style="min-height:0"> <span><b style="color:var(--bad)">May ask for audio.</b> People can then let it play music and search the catalog, using this server's TIDAL account. Only for apps you trust.</span></label>
     <div class="row"><button id="create" type="button">Register</button></div>
     <div id="fresh" class="item secret" hidden></div>
     <h2 style="margin-top:12px">Registered apps</h2>

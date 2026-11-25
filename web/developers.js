@@ -31,7 +31,9 @@ curl ${origin}/v1/me/player/currently-playing -H "Authorization: Bearer <access_
    (every refresh gives a new refresh token; the old one stops working)
    Revoke: POST ${origin}/oauth/revoke with token=...
 
-Scopes: user-read-profile (GET /v1/me), user-read-currently-playing (GET /v1/me/player/currently-playing).
+Scopes: user-read-profile (GET /v1/me), user-read-currently-playing (GET /v1/me/player/currently-playing),
+user-stream-audio (GET /v1/tracks/<id>/stream?quality=LOSSLESS, plus search, tracks, albums, artists, playlists and mixes).
+Audio is only for apps an admin marked "may ask for audio"; the consent page shows that to people in red.
 Songs show up only while one of the person's players is sharing what it plays (the "share what I'm playing" switch in the player).`;
 
   async function loadGrants() {
@@ -48,9 +50,10 @@ Songs show up only while one of the person's players is sharing what it plays (t
   async function loadApps() {
     const { apps } = await api("GET", "/oauth/apps"), box = $("apps");
     box.replaceChildren(...(apps.length ? apps.map((a) => el("div", { class: "item" },
-      el("b", { text: a.name }), el("small", { text: `client_id ${a.id} · ${a.confidential ? "has a secret" : "public app"} · ${a.people} ${a.people === 1 ? "person" : "people"} · last used ${when(a.lastUsed)}` }),
+      el("b", { text: a.name }), el("small", { text: `client_id ${a.id} · ${a.confidential ? "has a secret" : "public app"} · ${a.audio ? "MAY ASK FOR AUDIO" : "no audio"} · ${a.people} ${a.people === 1 ? "person" : "people"} · last used ${when(a.lastUsed)}` }),
       el("small", { text: a.redirectUris.join("  ") }),
       el("div", { class: "row" },
+        el("button", { class: "q", text: a.audio ? "Stop allowing audio" : "Allow audio", onclick: async () => { if (!a.audio && !confirm(`Let “${a.name}” ask people for audio? It would play music from this server's TIDAL account.`)) return; try { await api("PATCH", `/oauth/apps/${a.id}`, { audio: !a.audio }); loadApps(); } catch (e) { fail(e); } } }),
         a.confidential ? el("button", { class: "q", text: "New secret", onclick: async () => { if (!confirm("The old secret stops working. Continue?")) return; try { showSecret(`New secret for ${a.name}`, await api("POST", `/oauth/apps/${a.id}/secret`)); } catch (e) { fail(e); } } }) : "",
         el("button", { class: "d", text: "Delete", onclick: async () => { if (!confirm(`Delete “${a.name}”? Everyone who approved it is disconnected.`)) return; try { await api("DELETE", `/oauth/apps/${a.id}`); loadApps(); loadGrants(); } catch (e) { fail(e); } } }))))
       : [el("p", { text: "No apps registered." })]));
@@ -58,8 +61,8 @@ Songs show up only while one of the person's players is sharing what it plays (t
   $("create").addEventListener("click", async () => {
     msg.textContent = "";
     try {
-      const r = await api("POST", "/oauth/apps", { name: $("name").value, redirectUris: $("uris").value.split(/\s+/).filter(Boolean), confidential: $("conf").checked });
-      showSecret(`Registered “${r.app.name}”`, r); $("name").value = ""; $("uris").value = ""; loadApps();
+      const r = await api("POST", "/oauth/apps", { name: $("name").value, redirectUris: $("uris").value.split(/\s+/).filter(Boolean), confidential: $("conf").checked, audio: $("audio").checked });
+      showSecret(`Registered “${r.app.name}”`, r); $("name").value = ""; $("uris").value = ""; $("audio").checked = false; loadApps();
     } catch (e) { fail(e); }
   });
   (async () => {

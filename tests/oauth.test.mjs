@@ -166,6 +166,50 @@ test("a loopback app may use any port, nobody else may", async () => {
   void verifier;
 });
 
+test("audio: only for apps an admin allowed, shown in red, and only for people who may use the player", async () => {
+  const mk = async (name, audio) => (await call("POST", "/api/oauth/apps", { sid: admin, body: { name, redirectUris: [REDIRECT], confidential: false, audio } })).json.app;
+  const plain = await mk("Plain App", false), loud = await mk("Audio App", true);
+  assert.equal(plain.audio, false); assert.equal(loud.audio, true);
+  const { verifier, challenge } = pkce();
+  const ask = (client, scope) => call("GET", `/oauth/authorize?${new URLSearchParams({ response_type: "code", client_id: client, redirect_uri: REDIRECT, scope, state: "a", code_challenge: challenge, code_challenge_method: "S256" })}`);
+  const refused = await ask(plain.id, "user-read-profile user-stream-audio");
+  assert.equal(refused.status, 302); assert.match(refused.headers.get("location"), /error=invalid_scope/);
+  const req = /consent\?req=([a-f0-9]+)/.exec((await ask(loud.id, "user-read-profile user-stream-audio")).text)[1];
+  const page = await call("GET", `/oauth/consent?req=${req}`, { sid: user });
+  assert.match(page.text, /class="warn"/); assert.match(page.text, /asking for AUDIO/); assert.match(page.text, /<li class="red">Play music from this server/);
+  const calm = /consent\?req=([a-f0-9]+)/.exec((await ask(plain.id, "user-read-profile")).text)[1];
+  assert.doesNotMatch((await call("GET", `/oauth/consent?req=${calm}`, { sid: user })).text, /class="warn"/, "no warning when audio isn't asked for");
+
+  // a person who may not use the player cannot hand out audio
+  const off = await call("PATCH", "/api/settings", { sid: admin, body: { membersUsePlayer: false } }); assert.equal(off.status, 200, off.text);
+  const token = /T="([^"]+)"/.exec(page.text)[1];
+  assert.equal((await call("POST", "/api/oauth/consent", { sid: user, body: { req, token, allow: true } })).status, 403);
+  await call("PATCH", "/api/settings", { sid: admin, body: { membersUsePlayer: true } });
+  const ok = await call("POST", "/api/oauth/consent", { sid: user, body: { req, token, allow: true } });
+  assert.equal(ok.status, 200, "the request was kept, so allowing works once they may");
+  const t = await tokenCall({ grant_type: "authorization_code", code: new URL(ok.json.redirect).searchParams.get("code"), redirect_uri: REDIRECT, client_id: loud.id, code_verifier: verifier });
+  assert.equal(t.status, 200, t.text); assert.match(t.json.scope, /user-stream-audio/);
+  const get = (p) => call("GET", p, { headers: { authorization: `Bearer ${t.json.access_token}` } });
+  const reach = async (p) => { const r = await get(p); assert.ok(![401, 403, 429].includes(r.status), `${p} -> ${r.status} ${r.text.slice(0, 120)}`); };
+  await reach("/v1/tracks/123/stream?quality=LOSSLESS"); // (no TIDAL behind this test server, so it may fail, but it must get past the permission checks)
+  await reach("/v1/search?q=hello");
+  assert.equal((await get("/v1/tracks/123/lyrics")).status === 200, false, "lyrics are not part of audio");
+  assert.equal((await get("/v1/bot/token")).status, 403);
+  assert.equal((await get("/v1/me")).status, 200, "the profile scope it also asked for still works");
+
+  // the same person turned off later: the token stops reaching audio
+  await call("PATCH", "/api/settings", { sid: admin, body: { membersUsePlayer: false } });
+  assert.equal((await get("/v1/tracks/123/stream")).status, 403);
+  assert.equal((await get("/v1/search?q=hello")).status, 403);
+  await call("PATCH", "/api/settings", { sid: admin, body: { membersUsePlayer: true } });
+
+  // a token with no audio scope still can't
+  const b = await authorize(user, { client: plain.id, scope: "user-read-profile", challenge });
+  const t2 = await tokenCall({ grant_type: "authorization_code", code: b.code, redirect_uri: REDIRECT, client_id: plain.id, code_verifier: verifier });
+  assert.equal((await call("GET", "/v1/tracks/123/stream", { headers: { authorization: `Bearer ${t2.json.access_token}` } })).status, 403);
+  assert.equal((await call("PATCH", `/api/oauth/apps/${loud.id}`, { sid: admin, body: { audio: false } })).json.app.audio, false);
+});
+
 test("deleting an app disconnects everyone who approved it", async () => {
   const { verifier, challenge } = pkce();
   const a = await authorize(user, { client: app.id, scope: "user-read-profile", challenge });
