@@ -223,4 +223,7 @@ test("the developers page is served", async () => {
   const r = await call("GET", "/developers");
   assert.equal(r.status, 200); assert.match(r.text, /Connected apps/);
   assert.equal((await call("GET", "/developers.js")).status, 200);
+  const md = await call("GET", "/developers/AGENTS.md");
+  assert.equal(md.status, 200); assert.match(md.headers.get("content-type"), /text\/markdown/);
+  assert.ok(md.text.includes(`${BASE}/oauth/authorize`) && !md.text.includes("{{ORIGIN}}"), "this server's own address is filled in");
 });

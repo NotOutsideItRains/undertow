@@ -32,7 +32,7 @@ curl ${origin}/v1/me/player/currently-playing -H "Authorization: Bearer <access_
    Revoke: POST ${origin}/oauth/revoke with token=...
 
 Scopes: user-read-profile (GET /v1/me), user-read-currently-playing (GET /v1/me/player/currently-playing),
-user-stream-audio (GET /v1/tracks/<id>/stream?quality=LOSSLESS, plus search, tracks, albums, artists, playlists and mixes).
+user-stream-audio (GET /v1/tracks/<id>/stream?quality=CD, plus search, tracks, albums, artists, playlists and mixes).
 Audio is only for apps an admin marked "may ask for audio"; the consent page shows that to people in red.
 Songs show up only while one of the person's players is sharing what it plays (the "share what I'm playing" switch in the player).`;
 

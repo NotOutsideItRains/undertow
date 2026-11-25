@@ -1204,6 +1204,12 @@ http
         }
         return page(200, playerHost.mainSigninPage(id, discordOn(), APP_NAME));
       }
+      if (u.pathname === "/developers/AGENTS.md" && (req.method === "GET" || req.method === "HEAD")) { // how an AI agent uses the API, with this server's own address filled in
+        const host = String(req.headers["x-forwarded-host"] || req.headers.host || "");
+        const base = /^(localhost|127\.|\[::1\])/i.test(host) ? (process.env.PUBLIC_URL || `http://${host}`).replace(/\/+$/, "") : `${req.headers["x-forwarded-proto"] === "https" ? "https" : "http"}://${host}`;
+        const md = (await fs.promises.readFile(WEB + "developers/AGENTS.md", "utf8")).replaceAll("{{ORIGIN}}", base);
+        return void sendBody(res, 200, req.method === "HEAD" ? "" : md, { "Content-Type": "text/markdown; charset=utf-8", "Cache-Control": "no-cache", "X-Content-Type-Options": "nosniff", "Access-Control-Allow-Origin": "*" });
+      }
       if (u.pathname.startsWith("/oauth/") || u.pathname === "/.well-known/oauth-authorization-server") { // other apps asking a person for access to what they are playing (lib/oauth.mjs)
         const host = String(req.headers["x-forwarded-host"] || req.headers.host || "");
         const base = /^(localhost|127\.|\[::1\])/i.test(host) ? (process.env.PUBLIC_URL || `http://${host}`).replace(/\/+$/, "") : `${req.headers["x-forwarded-proto"] === "https" ? "https" : "http"}://${host}`;
